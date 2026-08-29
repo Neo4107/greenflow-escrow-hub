@@ -20,6 +20,7 @@
 
   --font-display: "Fraunces", ui-serif, Georgia, serif;
   --font-sans: "Karla", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-display);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
