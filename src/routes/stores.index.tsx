@@ -5,7 +5,7 @@ import { MapPin, Store } from "lucide-react";
 import { listStores } from "@/lib/marketplace.functions";
 import { SiteHeader } from "@/components/site-header";
 
-export const Route = createFileRoute("/stores")({
+export const Route = createFileRoute("/stores/")({
   head: () => ({
     meta: [
       { title: "Eco stores — verified South African makers | Rooted" },
