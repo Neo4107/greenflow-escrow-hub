@@ -6,7 +6,12 @@ export const Route = createFileRoute("/api/public/paystack-webhook")({
     handlers: {
       POST: async ({ request }) => {
         const secret = process.env["PAYSTACK_SECRET_KEY"];
-        if (!secret) return new Response("Gateway not configured", { status: 503 });
+        if (!secret) {
+          // No key stored yet: acknowledge so Paystack doesn't retry, and log it.
+          console.warn("paystack webhook received but PAYSTACK_SECRET_KEY is not configured");
+          return Response.json({ ok: false, reason: "gateway_unconfigured" });
+        }
+
 
         const raw = await request.text();
         const signature = request.headers.get("x-paystack-signature") ?? "";
