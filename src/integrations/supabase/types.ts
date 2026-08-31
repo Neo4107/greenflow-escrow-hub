@@ -77,6 +77,121 @@ export type Database = {
           },
         ]
       }
+      order_items: {
+        Row: {
+          commission_cents: number
+          created_at: string
+          id: string
+          order_id: string
+          payout_cents: number
+          product_id: string
+          quantity: number
+          seller_id: string
+          subtotal_cents: number
+          title: string
+          unit_price_cents: number
+        }
+        Insert: {
+          commission_cents: number
+          created_at?: string
+          id?: string
+          order_id: string
+          payout_cents: number
+          product_id: string
+          quantity: number
+          seller_id: string
+          subtotal_cents: number
+          title: string
+          unit_price_cents: number
+        }
+        Update: {
+          commission_cents?: number
+          created_at?: string
+          id?: string
+          order_id?: string
+          payout_cents?: number
+          product_id?: string
+          quantity?: number
+          seller_id?: string
+          subtotal_cents?: number
+          title?: string
+          unit_price_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          buyer_email: string
+          buyer_user_id: string | null
+          commission_cents: number
+          commission_rate: number
+          created_at: string
+          currency: string
+          gateway: string
+          gateway_reference: string
+          id: string
+          paid_at: string | null
+          payout_cents: number
+          status: Database["public"]["Enums"]["order_status"]
+          subtotal_cents: number
+          updated_at: string
+        }
+        Insert: {
+          buyer_email: string
+          buyer_user_id?: string | null
+          commission_cents: number
+          commission_rate?: number
+          created_at?: string
+          currency?: string
+          gateway?: string
+          gateway_reference: string
+          id?: string
+          paid_at?: string | null
+          payout_cents: number
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal_cents: number
+          updated_at?: string
+        }
+        Update: {
+          buyer_email?: string
+          buyer_user_id?: string | null
+          commission_cents?: number
+          commission_rate?: number
+          created_at?: string
+          currency?: string
+          gateway?: string
+          gateway_reference?: string
+          id?: string
+          paid_at?: string | null
+          payout_cents?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          subtotal_cents?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           admin_notes: string | null
@@ -165,6 +280,69 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      seller_payouts: {
+        Row: {
+          amount_cents: number
+          commission_cents: number
+          created_at: string
+          escrow_release_at: string
+          gross_cents: number
+          id: string
+          notes: string | null
+          order_id: string
+          paid_at: string | null
+          released_at: string | null
+          seller_id: string
+          status: Database["public"]["Enums"]["payout_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          commission_cents: number
+          created_at?: string
+          escrow_release_at: string
+          gross_cents: number
+          id?: string
+          notes?: string | null
+          order_id: string
+          paid_at?: string | null
+          released_at?: string | null
+          seller_id: string
+          status?: Database["public"]["Enums"]["payout_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          commission_cents?: number
+          created_at?: string
+          escrow_release_at?: string
+          gross_cents?: number
+          id?: string
+          notes?: string | null
+          order_id?: string
+          paid_at?: string | null
+          released_at?: string | null
+          seller_id?: string
+          status?: Database["public"]["Enums"]["payout_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_payouts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_payouts_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sellers: {
         Row: {
@@ -316,6 +494,8 @@ export type Database = {
     Enums: {
       app_role: "admin" | "seller" | "buyer"
       certificate_status: "pending" | "approved" | "rejected"
+      order_status: "pending" | "paid" | "failed" | "cancelled" | "refunded"
+      payout_status: "escrow" | "releasable" | "paid" | "withheld" | "refunded"
       product_status: "draft" | "pending_admin_review" | "approved" | "rejected"
       subscription_status: "trialing" | "active" | "past_due" | "cancelled"
     }
@@ -447,6 +627,8 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "seller", "buyer"],
       certificate_status: ["pending", "approved", "rejected"],
+      order_status: ["pending", "paid", "failed", "cancelled", "refunded"],
+      payout_status: ["escrow", "releasable", "paid", "withheld", "refunded"],
       product_status: ["draft", "pending_admin_review", "approved", "rejected"],
       subscription_status: ["trialing", "active", "past_due", "cancelled"],
     },
