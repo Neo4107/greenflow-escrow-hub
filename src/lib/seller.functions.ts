@@ -235,3 +235,44 @@ export const startSubscriptionCheckout = createServerFn({ method: "POST" })
 
     return { gatewayConfigured: true, authorizationUrl, reference };
   });
+
+/** Called when Paystack redirects the seller back to the dashboard. */
+export const confirmSubscriptionPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ reference: z.string().min(4).max(120) }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: store } = await supabase
+      .from("sellers")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!store) throw new Error("Create your store first.");
+
+    // Only allow confirming a reference that belongs to this seller.
+    const { data: payment } = await supabase
+      .from("subscription_payments")
+      .select("id")
+      .eq("gateway_reference", data.reference)
+      .eq("seller_id", store.id)
+      .maybeSingle();
+    if (!payment) return { activated: false as const, reason: "unknown_reference" as const };
+
+    const { paystackKey, verifyTransaction } = await import("./paystack.server");
+    if (!paystackKey()) return { activated: false as const, reason: "gateway_unconfigured" as const };
+
+    const verified = await verifyTransaction(data.reference);
+    if (verified.status !== "success") {
+      return { activated: false as const, reason: "not_successful" as const };
+    }
+
+    const { activateSubscriptionForReference } = await import("./subscription.server");
+    await activateSubscriptionForReference({
+      reference: data.reference,
+      amountCents: verified.amount,
+    });
+    return { activated: true as const };
+  });
