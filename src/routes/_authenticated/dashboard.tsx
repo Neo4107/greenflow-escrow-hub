@@ -243,7 +243,7 @@ function ProductsCard({
       ) : (
         <ul className="mt-4 space-y-3">
           {products.map((product) => {
-            const style = statusStyles[product.status] ?? statusStyles.draft!;
+            const style = statusStyles[product.status] ?? statusStyles['draft']!;
             const StatusIcon = style.icon;
             const certificate = certificates.find((c) => c.product_id === product.id);
             return (
