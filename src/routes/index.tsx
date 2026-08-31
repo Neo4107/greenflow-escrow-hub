@@ -3,6 +3,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Leaf, Search, Store, Sprout, ShieldCheck, PackageSearch } from "lucide-react";
 
+import { SiteHeader } from "@/components/site-header";
+
 import { listProducts } from "@/lib/marketplace.functions";
 import { ECO_ATTRIBUTES, ECO_LABELS, formatRands } from "@/lib/eco";
 import heroImage from "@/assets/hero-eco-market.jpg";
@@ -31,28 +33,7 @@ function HomePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <Leaf className="h-5 w-5" />
-            </span>
-            <span className="font-serif text-2xl font-semibold tracking-tight">Rooted</span>
-          </Link>
-          <nav className="flex items-center gap-4 text-sm font-medium">
-            <a href="#shop" className="text-muted-foreground transition-colors hover:text-foreground">
-              Shop
-            </a>
-            <a
-              href="#sell"
-              className="rounded-full bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              Sell on Rooted
-            </a>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Hero */}
       <section className="relative overflow-hidden">
