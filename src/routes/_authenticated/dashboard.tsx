@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -14,7 +14,13 @@ import {
   XCircle,
 } from "lucide-react";
 
-import { getMyAccount, createStore, saveProduct, startSubscriptionCheckout } from "@/lib/seller.functions";
+import {
+  getMyAccount,
+  createStore,
+  saveProduct,
+  startSubscriptionCheckout,
+  confirmSubscriptionPayment,
+} from "@/lib/seller.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { ECO_ATTRIBUTES, ECO_LABELS, PROVINCES, formatRands, SUBSCRIPTION_FEE_CENTS } from "@/lib/eco";
 import { SiteHeader } from "@/components/site-header";
@@ -127,7 +133,31 @@ function SubscriptionCard({
   payments: Account["payments"];
 }) {
   const startCheckout = useServerFn(startSubscriptionCheckout);
+  const confirmPayment = useServerFn(confirmSubscriptionPayment);
+  const queryClient = useQueryClient();
   const [notice, setNotice] = useState<string | null>(null);
+
+  // Paystack redirects back with ?reference=... — confirm it immediately so the
+  // store unlocks without waiting for the webhook to land.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const reference = params.get("reference") ?? params.get("trxref");
+    if (!reference) return;
+    window.history.replaceState({}, "", window.location.pathname);
+    void confirmPayment({ data: { reference } })
+      .then((result) => {
+        if (result.activated) {
+          setNotice("Payment received — your subscription is active and your store is live.");
+          void queryClient.invalidateQueries();
+        } else if (result.reason === "not_successful") {
+          setNotice("That payment hasn't completed yet. We'll activate your store as soon as Paystack confirms it.");
+        }
+      })
+      .catch((error: unknown) =>
+        setNotice(error instanceof Error ? error.message : "Could not confirm the payment."),
+      );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const checkout = useMutation({
     mutationFn: () =>
