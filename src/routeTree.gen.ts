@@ -16,6 +16,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as StoreSlugRouteImport } from './routes/store.$slug'
 import { Route as StoresIndexRouteImport } from './routes/stores.index'
 import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/public/paystack-webhook'
+import { Route as ApiPublicReleaseEscrowRouteImport } from './routes/api/public/release-escrow'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +53,11 @@ const ApiPublicPaystackWebhookRoute =
     path: '/api/public/paystack-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicReleaseEscrowRoute = ApiPublicReleaseEscrowRouteImport.update({
+  id: '/api/public/release-escrow',
+  path: '/api/public/release-escrow',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/store/$slug': typeof StoreSlugRoute
   '/stores/': typeof StoresIndexRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
+  '/api/public/release-escrow': typeof ApiPublicReleaseEscrowRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/store/$slug': typeof StoreSlugRoute
   '/stores': typeof StoresIndexRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
+  '/api/public/release-escrow': typeof ApiPublicReleaseEscrowRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/store/$slug': typeof StoreSlugRoute
   '/stores/': typeof StoresIndexRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
+  '/api/public/release-escrow': typeof ApiPublicReleaseEscrowRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/stores/'
     | '/api/public/paystack-webhook'
+    | '/api/public/release-escrow'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/stores'
     | '/api/public/paystack-webhook'
+    | '/api/public/release-escrow'
   id:
     | '__root__'
     | '/'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/stores/'
     | '/api/public/paystack-webhook'
+    | '/api/public/release-escrow'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -114,6 +126,7 @@ export interface RootRouteChildren {
   StoreSlugRoute: typeof StoreSlugRoute
   StoresIndexRoute: typeof StoresIndexRoute
   ApiPublicPaystackWebhookRoute: typeof ApiPublicPaystackWebhookRoute
+  ApiPublicReleaseEscrowRoute: typeof ApiPublicReleaseEscrowRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -167,6 +180,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaystackWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/release-escrow': {
+      id: '/api/public/release-escrow'
+      path: '/api/public/release-escrow'
+      fullPath: '/api/public/release-escrow'
+      preLoaderRoute: typeof ApiPublicReleaseEscrowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -188,6 +208,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoreSlugRoute: StoreSlugRoute,
   StoresIndexRoute: StoresIndexRoute,
   ApiPublicPaystackWebhookRoute: ApiPublicPaystackWebhookRoute,
+  ApiPublicReleaseEscrowRoute: ApiPublicReleaseEscrowRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
