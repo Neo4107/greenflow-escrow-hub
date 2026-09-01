@@ -42,6 +42,31 @@ export const Route = createFileRoute("/api/public/paystack-webhook")({
         if (!reference) return new Response("ok");
 
         const purpose = event.data?.metadata?.purpose;
+
+        if (purpose === "buyer_order" || reference.startsWith("ord_")) {
+          const { recordOrderPaid, markOrderFailed } = await import("@/lib/orders.server");
+          try {
+            if (event.event === "charge.success" && event.data?.status === "success") {
+              // Marketplace keeps the 10%; the seller's 90% enters 14-day escrow.
+              await recordOrderPaid({
+                reference,
+                ...(typeof event.data.amount === "number" ? { amountCents: event.data.amount } : {}),
+              });
+            } else if (event.event === "charge.failed") {
+              await markOrderFailed({ reference });
+            } else if (
+              event.event === "refund.processed" ||
+              event.event === "charge.dispute.create"
+            ) {
+              await markOrderFailed({ reference, refunded: true });
+            }
+          } catch (error) {
+            console.error("paystack order webhook handling failed", error);
+            return new Response("Webhook processing failed", { status: 500 });
+          }
+          return new Response("ok");
+        }
+
         if (purpose && purpose !== "seller_subscription") return new Response("ok");
 
         const { activateSubscriptionForReference, markSubscriptionPastDue } = await import(

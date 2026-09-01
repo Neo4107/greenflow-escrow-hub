@@ -56,6 +56,12 @@ export function SiteHeader() {
           {ready && email ? (
             <>
               <Link
+                to="/orders"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Orders
+              </Link>
+              <Link
                 to="/dashboard"
                 className="rounded-full bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
               >

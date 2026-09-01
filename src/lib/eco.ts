@@ -42,6 +42,8 @@ export const PROVINCES = [
 export const SUBSCRIPTION_FEE_CENTS = 24000;
 /** Marketplace cut of the gross product subtotal. */
 export const COMMISSION_RATE = 0.1;
+/** Days a buyer payment stays in escrow before the seller's 90% is released. */
+export const ESCROW_DAYS = 14;
 
 export function formatRands(cents: number): string {
   return new Intl.NumberFormat("en-ZA", {
