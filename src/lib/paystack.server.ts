@@ -82,3 +82,27 @@ export async function createSubaccount(params: {
   });
   return { subaccountCode: String(data["subaccount_code"] ?? "") };
 }
+
+/** Buyer order charge: full amount into the marketplace account (escrow held there). */
+export async function initializeOrderCharge(params: {
+  email: string;
+  amountCents: number;
+  reference: string;
+  callbackUrl: string;
+  orderId: string;
+}) {
+  const data = await paystackFetch("/transaction/initialize", {
+    method: "POST",
+    body: JSON.stringify({
+      email: params.email,
+      amount: params.amountCents,
+      currency: "ZAR",
+      reference: params.reference,
+      callback_url: params.callbackUrl,
+      metadata: { order_id: params.orderId, purpose: "buyer_order" },
+      channels: ["card", "eft", "mobile_money", "bank_transfer", "ussd"],
+    }),
+  });
+
+  return { authorizationUrl: String(data["authorization_url"] ?? "") };
+}
