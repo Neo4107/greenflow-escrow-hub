@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as StoreSlugRouteImport } from './routes/store.$slug'
 import { Route as StoresIndexRouteImport } from './routes/stores.index'
 import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/public/paystack-webhook'
@@ -36,6 +37,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ProductSlugRoute = ProductSlugRouteImport.update({
+  id: '/product/$slug',
+  path: '/product/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const StoreSlugRoute = StoreSlugRouteImport.update({
   id: '/store/$slug',
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/product/$slug': typeof ProductSlugRoute
   '/store/$slug': typeof StoreSlugRoute
   '/stores/': typeof StoresIndexRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/product/$slug': typeof ProductSlugRoute
   '/store/$slug': typeof StoreSlugRoute
   '/stores': typeof StoresIndexRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/product/$slug': typeof ProductSlugRoute
   '/store/$slug': typeof StoreSlugRoute
   '/stores/': typeof StoresIndexRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/product/$slug'
     | '/store/$slug'
     | '/stores/'
     | '/api/public/paystack-webhook'
@@ -103,6 +113,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/product/$slug'
     | '/store/$slug'
     | '/stores'
     | '/api/public/paystack-webhook'
@@ -113,6 +124,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/dashboard'
+    | '/product/$slug'
     | '/store/$slug'
     | '/stores/'
     | '/api/public/paystack-webhook'
@@ -123,6 +135,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ProductSlugRoute: typeof ProductSlugRoute
   StoreSlugRoute: typeof StoreSlugRoute
   StoresIndexRoute: typeof StoresIndexRoute
   ApiPublicPaystackWebhookRoute: typeof ApiPublicPaystackWebhookRoute
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/product/$slug': {
+      id: '/product/$slug'
+      path: '/product/$slug'
+      fullPath: '/product/$slug'
+      preLoaderRoute: typeof ProductSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/store/$slug': {
       id: '/store/$slug'
@@ -205,6 +225,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ProductSlugRoute: ProductSlugRoute,
   StoreSlugRoute: StoreSlugRoute,
   StoresIndexRoute: StoresIndexRoute,
   ApiPublicPaystackWebhookRoute: ApiPublicPaystackWebhookRoute,
