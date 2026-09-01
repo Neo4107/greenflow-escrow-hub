@@ -166,7 +166,13 @@ function HomePage() {
                   )}
                 </div>
                 <div className="p-4">
-                  <h3 className="line-clamp-1 font-medium">{product.title}</h3>
+                  <Link
+                    to="/product/$slug"
+                    params={{ slug: product.slug }}
+                    className="line-clamp-1 block font-medium hover:text-primary"
+                  >
+                    {product.title}
+                  </Link>
                   {stores[product.seller_id] && (
                     <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                       <Store className="h-3 w-3" />
