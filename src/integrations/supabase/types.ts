@@ -77,6 +77,47 @@ export type Database = {
           },
         ]
       }
+      dispute_evidence: {
+        Row: {
+          caption: string | null
+          created_at: string
+          file_path: string
+          file_type: string | null
+          id: string
+          return_request_id: string
+          uploaded_by: string
+          uploader_role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          file_path: string
+          file_type?: string | null
+          id?: string
+          return_request_id: string
+          uploaded_by: string
+          uploader_role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          file_path?: string
+          file_type?: string | null
+          id?: string
+          return_request_id?: string
+          uploaded_by?: string
+          uploader_role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispute_evidence_return_request_id_fkey"
+            columns: ["return_request_id"]
+            isOneToOne: false
+            referencedRelation: "return_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           commission_cents: number
@@ -280,6 +321,97 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      return_requests: {
+        Row: {
+          admin_notes: string | null
+          buyer_user_id: string
+          created_at: string
+          description: string | null
+          id: string
+          item_damaged: boolean
+          item_used: boolean
+          order_id: string
+          order_item_id: string
+          reason: string
+          refund_amount_cents: number
+          requested_outcome: Database["public"]["Enums"]["rma_outcome"]
+          resolution_summary: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          retention_offer: string | null
+          retention_offer_accepted: boolean | null
+          seller_id: string
+          status: Database["public"]["Enums"]["rma_status"]
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          buyer_user_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_damaged?: boolean
+          item_used?: boolean
+          order_id: string
+          order_item_id: string
+          reason: string
+          refund_amount_cents?: number
+          requested_outcome?: Database["public"]["Enums"]["rma_outcome"]
+          resolution_summary?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          retention_offer?: string | null
+          retention_offer_accepted?: boolean | null
+          seller_id: string
+          status?: Database["public"]["Enums"]["rma_status"]
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          buyer_user_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_damaged?: boolean
+          item_used?: boolean
+          order_id?: string
+          order_item_id?: string
+          reason?: string
+          refund_amount_cents?: number
+          requested_outcome?: Database["public"]["Enums"]["rma_outcome"]
+          resolution_summary?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          retention_offer?: string | null
+          retention_offer_accepted?: boolean | null
+          seller_id?: string
+          status?: Database["public"]["Enums"]["rma_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "return_requests_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_requests_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "return_requests_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       seller_payouts: {
         Row: {
@@ -495,8 +627,24 @@ export type Database = {
       app_role: "admin" | "seller" | "buyer"
       certificate_status: "pending" | "approved" | "rejected"
       order_status: "pending" | "paid" | "failed" | "cancelled" | "refunded"
-      payout_status: "escrow" | "releasable" | "paid" | "withheld" | "refunded"
+      payout_status:
+        | "escrow"
+        | "releasable"
+        | "paid"
+        | "withheld"
+        | "refunded"
+        | "reversed"
       product_status: "draft" | "pending_admin_review" | "approved" | "rejected"
+      rma_outcome: "refund" | "replacement" | "store_credit"
+      rma_status:
+        | "open"
+        | "ai_retention_offered"
+        | "awaiting_return"
+        | "escalated"
+        | "resolved_refund"
+        | "resolved_replacement"
+        | "resolved_credit"
+        | "rejected"
       subscription_status: "trialing" | "active" | "past_due" | "cancelled"
     }
     CompositeTypes: {
@@ -628,8 +776,26 @@ export const Constants = {
       app_role: ["admin", "seller", "buyer"],
       certificate_status: ["pending", "approved", "rejected"],
       order_status: ["pending", "paid", "failed", "cancelled", "refunded"],
-      payout_status: ["escrow", "releasable", "paid", "withheld", "refunded"],
+      payout_status: [
+        "escrow",
+        "releasable",
+        "paid",
+        "withheld",
+        "refunded",
+        "reversed",
+      ],
       product_status: ["draft", "pending_admin_review", "approved", "rejected"],
+      rma_outcome: ["refund", "replacement", "store_credit"],
+      rma_status: [
+        "open",
+        "ai_retention_offered",
+        "awaiting_return",
+        "escalated",
+        "resolved_refund",
+        "resolved_replacement",
+        "resolved_credit",
+        "rejected",
+      ],
       subscription_status: ["trialing", "active", "past_due", "cancelled"],
     },
   },
