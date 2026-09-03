@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export function SiteHeader() {
   const [email, setEmail] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [ready, setReady] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -17,9 +18,21 @@ export function SiteHeader() {
       if (!active) return;
       setEmail(data.session?.user.email ?? null);
       setReady(true);
+      const uid = data.session?.user.id;
+      if (!uid) return;
+      supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", uid)
+        .eq("role", "admin")
+        .maybeSingle()
+        .then(({ data: row }) => {
+          if (active) setIsAdmin(Boolean(row));
+        });
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setEmail(session?.user.email ?? null);
+      if (!session) setIsAdmin(false);
     });
     return () => {
       active = false;
@@ -55,6 +68,14 @@ export function SiteHeader() {
           </Link>
           {ready && email ? (
             <>
+              {isAdmin ? (
+                <Link
+                  to="/admin/disputes"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Disputes
+                </Link>
+              ) : null}
               <Link
                 to="/orders"
                 className="text-muted-foreground transition-colors hover:text-foreground"
