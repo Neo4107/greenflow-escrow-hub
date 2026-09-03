@@ -153,7 +153,7 @@ export const listMyOrders = createServerFn({ method: "GET" })
     const { data: items } = orderIds.length
       ? await supabase
           .from("order_items")
-          .select("order_id, title, quantity, subtotal_cents")
+          .select("id, order_id, title, quantity, subtotal_cents")
           .in("order_id", orderIds)
       : { data: [] };
 
