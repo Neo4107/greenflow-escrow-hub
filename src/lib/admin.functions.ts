@@ -120,3 +120,66 @@ export const setSellerSubscriptionActive = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const getAdminOverview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context as never);
+    const { supabase } = context;
+
+    const [
+      { data: sellers },
+      { data: certificates },
+      { data: products },
+      { data: payouts },
+      { data: tickets },
+      { data: orders },
+    ] = await Promise.all([
+      supabase
+        .from("sellers")
+        .select(
+          "id, store_name, slug, province, contact_email, is_active_subscription, subscription_status, subscription_fee_cents, next_billing_date, commission_rate, created_at",
+        )
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("brand_certificates")
+        .select(
+          "id, product_id, seller_id, brand_name, document_path, document_type, certification_expiry_date, status, created_at",
+        )
+        .eq("status", "pending")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("products")
+        .select("id, title, slug, seller_id, status, price_cents, stock, created_at")
+        .order("created_at", { ascending: false })
+        .limit(500),
+      supabase
+        .from("seller_payouts")
+        .select(
+          "id, seller_id, order_id, gross_cents, commission_cents, amount_cents, status, escrow_release_at, released_at, paid_at",
+        )
+        .order("escrow_release_at", { ascending: true })
+        .limit(1000),
+      supabase
+        .from("return_requests")
+        .select(
+          "id, order_id, order_item_id, seller_id, reason, requested_outcome, item_damaged, item_used, status, refund_amount_cents, created_at",
+        )
+        .order("created_at", { ascending: false })
+        .limit(500),
+      supabase
+        .from("orders")
+        .select("id, buyer_email, subtotal_cents, commission_cents, payout_cents, status, created_at")
+        .order("created_at", { ascending: false })
+        .limit(500),
+    ]);
+
+    return {
+      sellers: sellers ?? [],
+      certificates: certificates ?? [],
+      products: products ?? [],
+      payouts: payouts ?? [],
+      tickets: tickets ?? [],
+      orders: orders ?? [],
+    };
+  });
