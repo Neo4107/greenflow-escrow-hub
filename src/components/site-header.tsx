@@ -69,12 +69,20 @@ export function SiteHeader() {
           {ready && email ? (
             <>
               {isAdmin ? (
-                <Link
-                  to="/admin/disputes"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Disputes
-                </Link>
+                <>
+                  <Link
+                    to="/admin"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Admin
+                  </Link>
+                  <Link
+                    to="/admin/disputes"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Disputes
+                  </Link>
+                </>
               ) : null}
               <Link
                 to="/orders"

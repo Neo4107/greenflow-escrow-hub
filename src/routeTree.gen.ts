@@ -17,6 +17,7 @@ import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as StoreSlugRouteImport } from './routes/store.$slug'
 import { Route as StoresIndexRouteImport } from './routes/stores.index'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminDisputesRouteImport } from './routes/_authenticated/admin.disputes'
 import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/public/paystack-webhook'
 import { Route as ApiPublicReleaseEscrowRouteImport } from './routes/api/public/release-escrow'
@@ -60,6 +61,11 @@ const StoresIndexRoute = StoresIndexRouteImport.update({
   path: '/stores/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminDisputesRoute =
   AuthenticatedAdminDisputesRouteImport.update({
     id: '/admin/disputes',
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/admin/disputes': typeof AuthenticatedAdminDisputesRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/api/public/release-escrow': typeof ApiPublicReleaseEscrowRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/admin/disputes': typeof AuthenticatedAdminDisputesRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/api/public/release-escrow': typeof ApiPublicReleaseEscrowRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/disputes': typeof AuthenticatedAdminDisputesRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/api/public/release-escrow': typeof ApiPublicReleaseEscrowRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/admin/disputes'
     | '/api/public/paystack-webhook'
     | '/api/public/release-escrow'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/admin/disputes'
     | '/api/public/paystack-webhook'
     | '/api/public/release-escrow'
+    | '/admin'
   id:
     | '__root__'
     | '/'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/disputes'
     | '/api/public/paystack-webhook'
     | '/api/public/release-escrow'
+    | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -225,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoresIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/disputes': {
       id: '/_authenticated/admin/disputes'
       path: '/admin/disputes'
@@ -253,12 +272,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedAdminDisputesRoute: typeof AuthenticatedAdminDisputesRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedAdminDisputesRoute: AuthenticatedAdminDisputesRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
