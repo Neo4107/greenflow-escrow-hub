@@ -4,19 +4,25 @@ import { Leaf, Loader2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 
+type Intent = "buyer" | "seller";
+
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>): { intent?: Intent } => ({
+    intent: search["intent"] === "seller" ? "seller" : "buyer",
+  }),
   head: () => ({
     meta: [
-      { title: "Seller sign in — Rooted eco marketplace" },
+      { title: "Sign in — Rooted eco marketplace" },
       {
         name: "description",
         content:
-          "Sign in or create a Rooted seller account to list eco-friendly products, manage your store and your R240 monthly subscription.",
+          "Sign in or create a free Rooted account to buy South African eco-friendly products, track orders and open return tickets — or start a seller store.",
       },
-      { property: "og:title", content: "Seller sign in — Rooted eco marketplace" },
+      { property: "og:title", content: "Sign in — Rooted eco marketplace" },
       {
         property: "og:description",
-        content: "Create a Rooted seller account and start listing eco-friendly products.",
+        content:
+          "Create a free Rooted shopper account to buy eco-friendly products, follow your orders and open return tickets.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -27,6 +33,10 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { intent } = Route.useSearch();
+  const isSeller = intent === "seller";
+  const landing = isSeller ? "/dashboard" : "/account";
+
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,9 +47,9 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
+      if (data.session) navigate({ to: landing, replace: true });
     });
-  }, [navigate]);
+  }, [navigate, landing]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -53,12 +63,12 @@ function AuthPage() {
           password,
           options: {
             data: { full_name: fullName },
-            emailRedirectTo: `${window.location.origin}/dashboard`,
+            emailRedirectTo: `${window.location.origin}${landing}`,
           },
         });
         if (signUpError) throw signUpError;
         const { data: session } = await supabase.auth.getSession();
-        if (session.session) navigate({ to: "/dashboard" });
+        if (session.session) navigate({ to: landing });
         else setMessage("Check your inbox to confirm your email, then sign in.");
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -66,7 +76,7 @@ function AuthPage() {
           password,
         });
         if (signInError) throw signInError;
-        navigate({ to: "/dashboard" });
+        navigate({ to: landing });
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
@@ -85,13 +95,19 @@ function AuthPage() {
           <span className="font-serif text-2xl font-semibold tracking-tight">Rooted</span>
         </Link>
         <h1 className="font-serif text-2xl font-semibold">
-          {mode === "signin" ? "Welcome back" : "Create your seller account"}
+          {mode === "signin"
+            ? "Welcome back"
+            : isSeller
+              ? "Create your seller account"
+              : "Create your shopper account"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Flat R240/month subscription · 10% commission on sales.
+          {isSeller
+            ? "Flat R240/month subscription · 10% commission on sales."
+            : "Free to join · track your orders and open a return ticket any time."}
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           {mode === "signup" && (
             <div>
               <label htmlFor="fullName" className="text-sm font-medium">
@@ -159,8 +175,24 @@ function AuthPage() {
             }}
             className="font-medium text-primary hover:underline"
           >
-            {mode === "signin" ? "Create a seller account" : "Sign in"}
+            {mode === "signin"
+              ? isSeller
+                ? "Create a seller account"
+                : "Create a shopper account"
+              : "Sign in"}
           </button>
+        </p>
+
+        <p className="mt-3 text-center text-sm text-muted-foreground">
+          {isSeller ? (
+            <Link to="/auth" search={{ intent: "buyer" }} className="hover:underline">
+              I just want to shop
+            </Link>
+          ) : (
+            <Link to="/auth" search={{ intent: "seller" }} className="hover:underline">
+              I want to sell on Rooted
+            </Link>
+          )}
         </p>
       </div>
     </main>
