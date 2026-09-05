@@ -7,8 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 type Intent = "buyer" | "seller";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>): { intent: Intent } => ({
-    intent: search.intent === "seller" ? "seller" : "buyer",
+  validateSearch: (search: Record<string, unknown>): { intent?: Intent } => ({
+    intent: search["intent"] === "seller" ? "seller" : "buyer",
   }),
   head: () => ({
     meta: [
