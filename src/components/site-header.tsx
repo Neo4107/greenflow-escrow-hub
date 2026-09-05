@@ -92,9 +92,15 @@ export function SiteHeader() {
               </Link>
               <Link
                 to="/dashboard"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Sell
+              </Link>
+              <Link
+                to="/account"
                 className="rounded-full bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
               >
-                Seller dashboard
+                My account
               </Link>
               <button
                 onClick={handleSignOut}
@@ -104,12 +110,22 @@ export function SiteHeader() {
               </button>
             </>
           ) : (
-            <Link
-              to="/auth"
-              className="rounded-full bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              Sell on Rooted
-            </Link>
+            <>
+              <Link
+                to="/auth"
+                search={{ intent: "seller" }}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Sell on Rooted
+              </Link>
+              <Link
+                to="/auth"
+                search={{ intent: "buyer" }}
+                className="rounded-full bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Sign in
+              </Link>
+            </>
           )}
         </nav>
       </div>
