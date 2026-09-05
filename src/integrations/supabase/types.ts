@@ -233,6 +233,80 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_fee_ledger: {
+        Row: {
+          amount_cents: number
+          balance_after_cents: number
+          created_at: string
+          description: string | null
+          entry_type: Database["public"]["Enums"]["fee_entry_type"]
+          id: string
+          order_id: string | null
+          payout_id: string | null
+          period_start: string | null
+          seller_id: string
+          subscription_payment_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          balance_after_cents?: number
+          created_at?: string
+          description?: string | null
+          entry_type: Database["public"]["Enums"]["fee_entry_type"]
+          id?: string
+          order_id?: string | null
+          payout_id?: string | null
+          period_start?: string | null
+          seller_id: string
+          subscription_payment_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          balance_after_cents?: number
+          created_at?: string
+          description?: string | null
+          entry_type?: Database["public"]["Enums"]["fee_entry_type"]
+          id?: string
+          order_id?: string | null
+          payout_id?: string | null
+          period_start?: string | null
+          seller_id?: string
+          subscription_payment_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_fee_ledger_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_fee_ledger_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "seller_payouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_fee_ledger_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_fee_ledger_subscription_payment_id_fkey"
+            columns: ["subscription_payment_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           admin_notes: string | null
@@ -419,6 +493,7 @@ export type Database = {
           commission_cents: number
           created_at: string
           escrow_release_at: string
+          fee_deducted_cents: number
           gross_cents: number
           id: string
           notes: string | null
@@ -434,6 +509,7 @@ export type Database = {
           commission_cents: number
           created_at?: string
           escrow_release_at: string
+          fee_deducted_cents?: number
           gross_cents: number
           id?: string
           notes?: string | null
@@ -449,6 +525,7 @@ export type Database = {
           commission_cents?: number
           created_at?: string
           escrow_release_at?: string
+          fee_deducted_cents?: number
           gross_cents?: number
           id?: string
           notes?: string | null
@@ -482,10 +559,14 @@ export type Database = {
           contact_email: string | null
           created_at: string
           description: string | null
+          fee_notice_90d_sent_at: string | null
+          fees_charged_through: string | null
           id: string
           is_active_subscription: boolean
+          listing_started_at: string
           logo_url: string | null
           next_billing_date: string | null
+          outstanding_fee_cents: number
           paystack_subaccount_code: string | null
           province: string | null
           slug: string
@@ -501,10 +582,14 @@ export type Database = {
           contact_email?: string | null
           created_at?: string
           description?: string | null
+          fee_notice_90d_sent_at?: string | null
+          fees_charged_through?: string | null
           id?: string
           is_active_subscription?: boolean
+          listing_started_at?: string
           logo_url?: string | null
           next_billing_date?: string | null
+          outstanding_fee_cents?: number
           paystack_subaccount_code?: string | null
           province?: string | null
           slug: string
@@ -520,10 +605,14 @@ export type Database = {
           contact_email?: string | null
           created_at?: string
           description?: string | null
+          fee_notice_90d_sent_at?: string | null
+          fees_charged_through?: string | null
           id?: string
           is_active_subscription?: boolean
+          listing_started_at?: string
           logo_url?: string | null
           next_billing_date?: string | null
+          outstanding_fee_cents?: number
           paystack_subaccount_code?: string | null
           province?: string | null
           slug?: string
@@ -626,6 +715,11 @@ export type Database = {
     Enums: {
       app_role: "admin" | "seller" | "buyer"
       certificate_status: "pending" | "approved" | "rejected"
+      fee_entry_type:
+        | "fee_charge"
+        | "sales_deduction"
+        | "out_of_pocket_payment"
+        | "write_off"
       order_status: "pending" | "paid" | "failed" | "cancelled" | "refunded"
       payout_status:
         | "escrow"
@@ -775,6 +869,12 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "seller", "buyer"],
       certificate_status: ["pending", "approved", "rejected"],
+      fee_entry_type: [
+        "fee_charge",
+        "sales_deduction",
+        "out_of_pocket_payment",
+        "write_off",
+      ],
       order_status: ["pending", "paid", "failed", "cancelled", "refunded"],
       payout_status: [
         "escrow",
