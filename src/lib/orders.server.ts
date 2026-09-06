@@ -99,9 +99,11 @@ export async function recordOrderPaid(params: { reference: string; amountCents?:
     ok: true as const,
     alreadyPaid: false as const,
     commissionCents: order.commission_cents,
-    escrowCents: order.payout_cents,
+    escrowCents: order.payout_cents - feeDeductedCents,
+    platformFeeDeductedCents: feeDeductedCents,
     escrowReleaseAt: releaseAt.toISOString(),
   };
+
 }
 
 export async function markOrderFailed(params: { reference: string; refunded?: boolean }) {
