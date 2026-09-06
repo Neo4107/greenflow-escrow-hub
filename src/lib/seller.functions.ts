@@ -42,37 +42,72 @@ export const getMyAccount = createServerFn({ method: "GET" })
         products: [],
         payments: [],
         certificates: [],
+        ledger: [],
+        outstandingFeeCents: 0,
+        daysListed: 0,
+        showNinetyDayNotice: false,
         isAdmin: (roles ?? []).some((r) => r.role === "admin"),
       };
     }
 
-    const [{ data: products }, { data: payments }, { data: certificates }] = await Promise.all([
-      supabase
-        .from("products")
-        .select("*")
-        .eq("seller_id", store.id)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("subscription_payments")
-        .select("*")
-        .eq("seller_id", store.id)
-        .order("created_at", { ascending: false })
-        .limit(12),
-      supabase
-        .from("brand_certificates")
-        .select("*")
-        .eq("seller_id", store.id)
-        .order("created_at", { ascending: false }),
-    ]);
+
+    // Bring this seller's monthly platform fee charges up to date before reading.
+    const { accrueMonthlyPlatformFees } = await import("./fees.server");
+    await accrueMonthlyPlatformFees({ sellerId: store.id });
+
+    const { data: freshStore } = await supabase
+      .from("sellers")
+      .select("*")
+      .eq("id", store.id)
+      .maybeSingle();
+    const currentStore = freshStore ?? store;
+
+    const [{ data: products }, { data: payments }, { data: certificates }, { data: ledger }] =
+      await Promise.all([
+        supabase
+          .from("products")
+          .select("*")
+          .eq("seller_id", store.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("subscription_payments")
+          .select("*")
+          .eq("seller_id", store.id)
+          .order("created_at", { ascending: false })
+          .limit(12),
+        supabase
+          .from("brand_certificates")
+          .select("*")
+          .eq("seller_id", store.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("platform_fee_ledger")
+          .select("*")
+          .eq("seller_id", store.id)
+          .order("created_at", { ascending: false })
+          .limit(24),
+      ]);
+
+    const { FEE_NOTICE_DAYS } = await import("./eco");
+    const daysListed = Math.floor(
+      (Date.now() - new Date(currentStore.listing_started_at).getTime()) / 86_400_000,
+    );
 
     return {
-      store,
+      store: currentStore,
       products: products ?? [],
       payments: payments ?? [],
       certificates: certificates ?? [],
+      ledger: ledger ?? [],
+      outstandingFeeCents: currentStore.outstanding_fee_cents,
+      daysListed,
+      showNinetyDayNotice:
+        currentStore.outstanding_fee_cents > 0 &&
+        (daysListed >= FEE_NOTICE_DAYS || Boolean(currentStore.fee_notice_90d_sent_at)),
       isAdmin: (roles ?? []).some((r) => r.role === "admin"),
     };
   });
+
 
 export const createStore = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -197,10 +232,15 @@ export const startSubscriptionCheckout = createServerFn({ method: "POST" })
 
     const { data: store } = await supabase
       .from("sellers")
-      .select("id, store_name")
+      .select("id, store_name, outstanding_fee_cents")
       .eq("user_id", userId)
       .maybeSingle();
     if (!store) throw new Error("Create your store first.");
+
+    // Sellers settle whatever they owe; if nothing is outstanding they can
+    // prepay one month of the fixed platform fee.
+    const amountCents =
+      store.outstanding_fee_cents > 0 ? store.outstanding_fee_cents : SUBSCRIPTION_FEE_CENTS;
 
     const reference = `sub_${store.id.slice(0, 8)}_${Date.now()}`;
     const periodStart = new Date();
@@ -209,7 +249,7 @@ export const startSubscriptionCheckout = createServerFn({ method: "POST" })
 
     await supabase.from("subscription_payments").insert({
       seller_id: store.id,
-      amount_cents: SUBSCRIPTION_FEE_CENTS,
+      amount_cents: amountCents,
       status: "pending",
       gateway_reference: reference,
       period_start: periodStart.toISOString().slice(0, 10),
@@ -221,24 +261,26 @@ export const startSubscriptionCheckout = createServerFn({ method: "POST" })
         gatewayConfigured: false,
         authorizationUrl: null as string | null,
         reference,
+        amountCents,
       };
     }
 
     const email = (claims as { email?: string }).email ?? "";
     const { authorizationUrl } = await initializeSubscriptionCharge({
       email,
-      amountCents: SUBSCRIPTION_FEE_CENTS,
+      amountCents,
       reference,
       callbackUrl: data.returnUrl,
       sellerId: store.id,
     });
 
-    return { gatewayConfigured: true, authorizationUrl, reference };
+    return { gatewayConfigured: true, authorizationUrl, reference, amountCents };
   });
 
 /** Called when Paystack redirects the seller back to the dashboard. */
 export const confirmSubscriptionPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+
   .inputValidator((input: unknown) =>
     z.object({ reference: z.string().min(4).max(120) }).parse(input ?? {}),
   )

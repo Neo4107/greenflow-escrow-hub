@@ -46,22 +46,40 @@ export async function recordOrderPaid(params: { reference: string; amountCents?:
 
   const releaseAt = new Date(paidAt.getTime() + ESCROW_DAYS * 24 * 60 * 60 * 1000);
 
+  let feeDeductedCents = 0;
+
   if (perSeller.size > 0) {
-    const { error: payoutErr } = await supabaseAdmin.from("seller_payouts").upsert(
-      [...perSeller.entries()].map(([sellerId, totals]) => ({
-        order_id: order.id,
-        seller_id: sellerId,
-        gross_cents: totals.gross,
-        commission_cents: totals.commission,
-        amount_cents: totals.payout,
-        escrow_release_at: releaseAt.toISOString(),
-        status: "escrow" as const,
-        notes: `${ESCROW_DAYS}-day escrow; marketplace retained ${totals.commission} cents commission.`,
-      })),
-      { onConflict: "order_id,seller_id" },
-    );
+    const { data: payouts, error: payoutErr } = await supabaseAdmin
+      .from("seller_payouts")
+      .upsert(
+        [...perSeller.entries()].map(([sellerId, totals]) => ({
+          order_id: order.id,
+          seller_id: sellerId,
+          gross_cents: totals.gross,
+          commission_cents: totals.commission,
+          amount_cents: totals.payout,
+          escrow_release_at: releaseAt.toISOString(),
+          status: "escrow" as const,
+          notes: `${ESCROW_DAYS}-day escrow; marketplace retained ${totals.commission} cents commission.`,
+        })),
+        { onConflict: "order_id,seller_id" },
+      )
+      .select("id, seller_id, amount_cents");
     if (payoutErr) throw payoutErr;
+
+    // Any outstanding R240 platform fee balance comes off the sales balance.
+    const { deductFeesFromPayout } = await import("./fees.server");
+    for (const payout of payouts ?? []) {
+      const result = await deductFeesFromPayout({
+        sellerId: payout.seller_id,
+        payoutId: payout.id,
+        orderId: order.id,
+        payoutCents: payout.amount_cents,
+      });
+      feeDeductedCents += result.deductedCents;
+    }
   }
+
 
   // Reserve stock for the paid items.
   for (const item of items ?? []) {
@@ -81,9 +99,11 @@ export async function recordOrderPaid(params: { reference: string; amountCents?:
     ok: true as const,
     alreadyPaid: false as const,
     commissionCents: order.commission_cents,
-    escrowCents: order.payout_cents,
+    escrowCents: order.payout_cents - feeDeductedCents,
+    platformFeeDeductedCents: feeDeductedCents,
     escrowReleaseAt: releaseAt.toISOString(),
   };
+
 }
 
 export async function markOrderFailed(params: { reference: string; refunded?: boolean }) {

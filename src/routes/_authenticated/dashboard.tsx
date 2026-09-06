@@ -32,12 +32,12 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       {
         name: "description",
         content:
-          "Manage your Rooted store: listings, product review outcomes and your R240 monthly subscription status.",
+          "Manage your Rooted store: listings, product review outcomes and your R240 platform fee balance.",
       },
       { property: "og:title", content: "Seller dashboard — Rooted" },
       {
         property: "og:description",
-        content: "Manage listings, review outcomes and your subscription on Rooted.",
+        content: "Manage listings, review outcomes and your platform fee balance on Rooted.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -81,7 +81,7 @@ function DashboardPage() {
     );
   }
 
-  const { store, products, payments, certificates } = data;
+  const { store, products, payments, certificates, ledger } = data;
 
   return (
     <Shell>
@@ -90,29 +90,33 @@ function DashboardPage() {
           <h1 className="font-serif text-3xl font-semibold">{store.store_name}</h1>
           <p className="text-sm text-muted-foreground">{store.tagline ?? "Your Rooted store"}</p>
         </div>
-        {store.is_active_subscription && (
-          <Link
-            to="/store/$slug"
-            params={{ slug: store.slug }}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
-          >
-            <ExternalLink className="h-4 w-4" />
-            View public store
-          </Link>
-        )}
+        <Link
+          to="/store/$slug"
+          params={{ slug: store.slug }}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
+        >
+          <ExternalLink className="h-4 w-4" />
+          View public store
+        </Link>
       </div>
 
-      <SubscriptionCard store={store} payments={payments} />
+      <FeeBalanceCard
+        store={store}
+        payments={payments}
+        ledger={ledger}
+        outstandingFeeCents={data.outstandingFeeCents}
+        showNinetyDayNotice={data.showNinetyDayNotice}
+      />
 
       <ProductsCard products={products} certificates={certificates} />
 
       <AddProductForm
-        subscriptionActive={store.is_active_subscription}
         onSaved={() => queryClient.invalidateQueries({ queryKey: ["my-account"] })}
       />
     </Shell>
   );
 }
+
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -125,12 +129,18 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 type Account = Awaited<ReturnType<typeof getMyAccount>>;
 
-function SubscriptionCard({
+function FeeBalanceCard({
   store,
   payments,
+  ledger,
+  outstandingFeeCents,
+  showNinetyDayNotice,
 }: {
   store: NonNullable<Account["store"]>;
   payments: Account["payments"];
+  ledger: Account["ledger"];
+  outstandingFeeCents: number;
+  showNinetyDayNotice: boolean;
 }) {
   const startCheckout = useServerFn(startSubscriptionCheckout);
   const confirmPayment = useServerFn(confirmSubscriptionPayment);
@@ -138,7 +148,7 @@ function SubscriptionCard({
   const [notice, setNotice] = useState<string | null>(null);
 
   // Paystack redirects back with ?reference=... — confirm it immediately so the
-  // store unlocks without waiting for the webhook to land.
+  // balance updates without waiting for the webhook to land.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const reference = params.get("reference") ?? params.get("trxref");
@@ -147,10 +157,12 @@ function SubscriptionCard({
     void confirmPayment({ data: { reference } })
       .then((result) => {
         if (result.activated) {
-          setNotice("Payment received — your subscription is active and your store is live.");
+          setNotice("Payment received — your platform fee balance has been updated.");
           void queryClient.invalidateQueries();
         } else if (result.reason === "not_successful") {
-          setNotice("That payment hasn't completed yet. We'll activate your store as soon as Paystack confirms it.");
+          setNotice(
+            "That payment hasn't completed yet. We'll clear your balance as soon as Paystack confirms it.",
+          );
         }
       })
       .catch((error: unknown) =>
@@ -166,13 +178,13 @@ function SubscriptionCard({
       if (result.authorizationUrl) window.location.href = result.authorizationUrl;
       else
         setNotice(
-          `Payment reference ${result.reference} was recorded, but the payment gateway isn't configured yet. An admin can activate your subscription manually.`,
+          `Payment reference ${result.reference} was recorded, but the payment gateway isn't set up yet. An admin can clear your balance manually.`,
         );
     },
     onError: (error) => setNotice(error instanceof Error ? error.message : "Checkout failed."),
   });
 
-  const active = store.is_active_subscription;
+  const owing = outstandingFeeCents > 0;
 
   return (
     <section className="rounded-2xl border border-border bg-card p-6">
@@ -180,56 +192,114 @@ function SubscriptionCard({
         <div>
           <h2 className="flex items-center gap-2 font-serif text-xl font-semibold">
             <CreditCard className="h-5 w-5 text-primary" />
-            Subscription
+            Platform fee balance
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Flat {formatRands(SUBSCRIPTION_FEE_CENTS)} / month · {Number(store.commission_rate)}%
-            commission on sales.
+            R0 upfront. {formatRands(SUBSCRIPTION_FEE_CENTS)} per month plus{" "}
+            {Number(store.commission_rate)}% commission, deducted from your sales balance.
           </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+          <p className="mt-3 font-serif text-3xl font-semibold">
+            {formatRands(outstandingFeeCents)}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
             <span
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-                active ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+                owing ? "bg-secondary text-secondary-foreground" : "bg-primary/15 text-primary"
               }`}
             >
-              {active ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
-              {active ? "Active" : "Inactive"}
+              {owing ? (
+                <AlertTriangle className="h-3.5 w-3.5" />
+              ) : (
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              )}
+              {owing ? "Outstanding balance" : "Nothing outstanding"}
             </span>
-            <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium capitalize text-muted-foreground">
-              {store.subscription_status.replace(/_/g, " ")}
+            <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+              Listings live since {new Date(store.listing_started_at).toLocaleDateString("en-ZA")}
             </span>
-            {store.next_billing_date && (
-              <span className="text-xs text-muted-foreground">
-                Next billing {store.next_billing_date}
-              </span>
-            )}
           </div>
         </div>
-        {!active && (
-          <button
-            onClick={() => checkout.mutate()}
-            disabled={checkout.isPending}
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-          >
-            {checkout.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            Pay {formatRands(SUBSCRIPTION_FEE_CENTS)} to activate
-          </button>
-        )}
+        <button
+          onClick={() => checkout.mutate()}
+          disabled={checkout.isPending}
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+        >
+          {checkout.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          {owing
+            ? `Pay ${formatRands(outstandingFeeCents)} now`
+            : `Prepay ${formatRands(SUBSCRIPTION_FEE_CENTS)}`}
+        </button>
       </div>
 
-      {!active && (
-        <p className="mt-4 rounded-lg bg-secondary/60 p-3 text-sm text-secondary-foreground">
-          Your store and products stay hidden from buyers until your subscription is active.
+      {showNinetyDayNotice ? (
+        <div className="mt-4 rounded-lg border border-border bg-secondary/60 p-4 text-sm text-secondary-foreground">
+          <p className="font-semibold">Action required: outstanding platform fee balance</p>
+          <p className="mt-1">
+            Your listings have been running for 90 days or more and no sales have been recorded, so
+            your account reflects an outstanding balance of {formatRands(outstandingFeeCents)}.
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            <li>
+              <strong>Keep selling as normal:</strong> your listings stay active and the balance is
+              deducted automatically from future sales until it's paid off.
+            </li>
+            <li>
+              <strong>Pay out of pocket:</strong> settle it now to keep your future sales earnings
+              whole.
+            </li>
+          </ul>
+          <p className="mt-2 text-xs">
+            Please keep your store within our marketplace guidelines — listings that break market
+            rules are closed by administration.
+          </p>
+        </div>
+      ) : (
+        <p className="mt-4 rounded-lg bg-secondary/40 p-3 text-sm text-secondary-foreground">
+          Your listings stay active indefinitely unless removed by administration for breaking market
+          rules. When you make a sale, the platform fee and commission come off your sales balance
+          automatically.
         </p>
       )}
       {notice && <p className="mt-4 text-sm text-muted-foreground">{notice}</p>}
+
+      {ledger.length > 0 && (
+        <div className="mt-5 overflow-hidden rounded-lg border border-border">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <tr>
+                <th className="px-3 py-2">Date</th>
+                <th className="px-3 py-2">Entry</th>
+                <th className="px-3 py-2">Amount</th>
+                <th className="px-3 py-2">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ledger.map((entry) => (
+                <tr key={entry.id} className="border-t border-border">
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {new Date(entry.created_at).toLocaleDateString("en-ZA")}
+                  </td>
+                  <td className="px-3 py-2">{entry.description ?? entry.entry_type}</td>
+                  <td className="px-3 py-2">
+                    {entry.entry_type === "fee_charge" ? "+" : "−"}
+                    {formatRands(entry.amount_cents)}
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {formatRands(entry.balance_after_cents)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {payments.length > 0 && (
         <div className="mt-5 overflow-hidden rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead className="bg-muted/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
-                <th className="px-3 py-2">Amount</th>
+                <th className="px-3 py-2">Out-of-pocket payment</th>
                 <th className="px-3 py-2">Status</th>
                 <th className="px-3 py-2">Period</th>
                 <th className="px-3 py-2">Reference</th>
@@ -255,6 +325,7 @@ function SubscriptionCard({
     </section>
   );
 }
+
 
 function ProductsCard({
   products,
@@ -357,8 +428,9 @@ function CreateStoreForm({ onCreated }: { onCreated: () => void }) {
         Create your store
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Set up your store, then activate your {formatRands(SUBSCRIPTION_FEE_CENTS)}/month
-        subscription to go live.
+        No upfront fees — set up your store and list today. The{" "}
+        {formatRands(SUBSCRIPTION_FEE_CENTS)} monthly platform fee and 10% commission come off your
+        sales balance.
       </p>
       <form
         className="mt-6 grid gap-4 sm:grid-cols-2"
@@ -433,10 +505,8 @@ function CreateStoreForm({ onCreated }: { onCreated: () => void }) {
 }
 
 function AddProductForm({
-  subscriptionActive,
   onSaved,
 }: {
-  subscriptionActive: boolean;
   onSaved: () => void;
 }) {
   const save = useServerFn(saveProduct);
@@ -494,7 +564,7 @@ function AddProductForm({
     onSuccess: (result) => {
       setSuccess(
         result.status === "approved"
-          ? "Listed. It's live once your subscription is active."
+          ? "Listed and live on the marketplace."
           : "Submitted for admin review — branded listings need certificate approval first.",
       );
       setForm({
@@ -527,13 +597,6 @@ function AddProductForm({
           {open ? "Close" : "New listing"}
         </button>
       </div>
-
-      {!subscriptionActive && (
-        <p className="mt-3 text-sm text-muted-foreground">
-          You can prepare listings now; they become visible to buyers once your subscription is
-          active.
-        </p>
-      )}
 
       {open && (
         <form

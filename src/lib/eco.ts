@@ -38,12 +38,17 @@ export const PROVINCES = [
   "Western Cape",
 ];
 
-/** Fixed platform fee every seller pays each month, in cents. */
+/** Fixed platform fee charged to each seller's balance every month, in cents. */
 export const SUBSCRIPTION_FEE_CENTS = 24000;
+/** Same fee, named for the pay-from-sales balance model. */
+export const PLATFORM_FEE_CENTS = SUBSCRIPTION_FEE_CENTS;
 /** Marketplace cut of the gross product subtotal. */
 export const COMMISSION_RATE = 0.1;
 /** Days a buyer payment stays in escrow before the seller's 90% is released. */
 export const ESCROW_DAYS = 14;
+/** Days an unpaid balance may run before the seller gets the outstanding-balance notice. */
+export const FEE_NOTICE_DAYS = 90;
+
 
 export function formatRands(cents: number): string {
   return new Intl.NumberFormat("en-ZA", {

@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => {
     const title = "Admin dashboard — Rooted marketplace control";
     const description =
-      "Monitor seller stores and R240 subscriptions, review pending brand certificates, track escrow balances and work the dispute ticket backlog.";
+      "Monitor seller stores and outstanding R240 platform fee balances, review pending brand certificates, track escrow balances and work the dispute ticket backlog.";
     return {
       meta: [
         { title },
@@ -117,6 +117,10 @@ function AdminDashboard() {
   const openTickets = (data?.tickets ?? []).filter((ticket) => isOpenTicket(ticket.status));
   const escalated = openTickets.filter((ticket) => ticket.status === "escalated");
   const activeSellers = (data?.sellers ?? []).filter((seller) => seller.is_active_subscription);
+  const feesOutstandingCents = (data?.sellers ?? []).reduce(
+    (sum, seller) => sum + (seller.outstanding_fee_cents ?? 0),
+    0,
+  );
 
   const reviewMutation = useMutation({
     mutationFn: async (input: { certificateId: string; approve: boolean }) =>
@@ -156,7 +160,7 @@ function AdminDashboard() {
         <header className="space-y-2">
           <h1 className="font-serif text-4xl font-semibold tracking-tight">Admin dashboard</h1>
           <p className="max-w-2xl text-muted-foreground">
-            Marketplace control room: seller subscriptions, brand certificate reviews, escrow
+            Marketplace control room: seller fee balances, brand certificate reviews, escrow
             positions and the dispute backlog.
           </p>
         </header>
@@ -177,9 +181,9 @@ function AdminDashboard() {
             <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard
                 icon={<Store className="h-4 w-4" />}
-                label="Active stores"
-                value={`${activeSellers.length}/${data?.sellers.length ?? 0}`}
-                hint="Sellers with a paid R240 subscription"
+                label="Stores listing"
+                value={String(data?.sellers.length ?? 0)}
+                hint={`${formatRands(feesOutstandingCents)} platform fees outstanding`}
               />
               <StatCard
                 icon={<FileCheck2 className="h-4 w-4" />}
@@ -290,9 +294,9 @@ function AdminDashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Seller listings &amp; subscriptions</CardTitle>
+                <CardTitle>Seller listings &amp; fee balances</CardTitle>
                 <CardDescription>
-                  Every store, its R240 billing state and current escrow position.
+                  Every store, its outstanding R240 platform fee balance and current escrow position.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -313,18 +317,23 @@ function AdminDashboard() {
                           <div className="space-y-1">
                             <p className="flex items-center gap-2 font-medium">
                               {seller.store_name}
-                              {seller.is_active_subscription ? (
-                                <Badge variant="secondary" className="gap-1">
-                                  <BadgeCheck className="h-3 w-3" /> Active
+                              {seller.outstanding_fee_cents > 0 ? (
+                                <Badge variant="outline">
+                                  {formatRands(seller.outstanding_fee_cents)} owing
                                 </Badge>
                               ) : (
-                                <Badge variant="outline">{seller.subscription_status}</Badge>
+                                <Badge variant="secondary" className="gap-1">
+                                  <BadgeCheck className="h-3 w-3" /> Settled
+                                </Badge>
+                              )}
+                              {seller.fee_notice_90d_sent_at && (
+                                <Badge variant="outline">90-day notice sent</Badge>
                               )}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               {seller.province ?? "Province not set"} ·{" "}
-                              {seller.contact_email ?? "no contact email"} · next billing{" "}
-                              {seller.next_billing_date ?? "—"}
+                              {seller.contact_email ?? "no contact email"} · listing since{" "}
+                              {new Date(seller.listing_started_at).toLocaleDateString("en-ZA")}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">

@@ -99,8 +99,7 @@ function ProductPage() {
           <div className="space-y-4">
             <h1 className="font-serif text-3xl">Listing not available</h1>
             <p className="text-muted-foreground">
-              This product may be unapproved, sold out, or from a store with an inactive
-              subscription.
+              This listing may still be awaiting review, or it may have been removed.
             </p>
             <Link to="/" className="text-primary underline">
               Back to the marketplace

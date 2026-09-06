@@ -12,7 +12,7 @@ export const Route = createFileRoute("/stores/")({
       {
         name: "description",
         content:
-          "Browse every verified eco store on Rooted. Independent South African makers with active subscriptions, listing zero-waste, vegan and organic products.",
+          "Browse every verified eco store on Rooted. Independent South African makers listing zero-waste, vegan and organic products.",
       },
       { property: "og:title", content: "Eco stores — verified South African makers | Rooted" },
       {
@@ -40,7 +40,7 @@ function StoresPage() {
       <main className="mx-auto max-w-6xl px-4 py-12">
         <h1 className="font-serif text-3xl font-semibold md:text-4xl">Verified eco stores</h1>
         <p className="mt-2 max-w-lg text-muted-foreground">
-          Every store here has an active R240/month subscription and products reviewed by our team.
+          Every store here is an independent South African maker with products reviewed by our team.
         </p>
 
         {isLoading ? (
@@ -54,7 +54,7 @@ function StoresPage() {
             <Store className="mx-auto h-10 w-10 text-muted-foreground" />
             <h2 className="mt-3 font-serif text-xl font-semibold">No active stores yet</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Stores appear once a seller's subscription is active.
+              Stores appear here as soon as sellers create them.
             </p>
           </div>
         ) : (

@@ -52,15 +52,18 @@ async function writeLedger(
  * listed but not yet billed, and flags sellers who have carried an unpaid
  * balance for 90 days so the outstanding-balance notice can be shown.
  */
-export async function accrueMonthlyPlatformFees() {
+export async function accrueMonthlyPlatformFees(options?: { sellerId?: string }) {
   const db = await admin();
   const now = new Date();
 
-  const { data: sellers, error } = await db
+  let query = db
     .from("sellers")
     .select(
       "id, store_name, outstanding_fee_cents, listing_started_at, fees_charged_through, fee_notice_90d_sent_at, subscription_fee_cents",
     );
+  if (options?.sellerId) query = query.eq("id", options.sellerId);
+
+  const { data: sellers, error } = await query;
   if (error) throw error;
 
   let chargedSellers = 0;

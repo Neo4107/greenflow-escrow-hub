@@ -213,7 +213,7 @@ function HomePage() {
             {
               icon: Store,
               title: "Independent sellers",
-              text: "Every store is a South African maker paying a flat R240/month — no hidden fees.",
+              text: "Every store is an independent South African maker — no hidden fees for buyers.",
             },
             {
               icon: Sprout,
@@ -241,7 +241,7 @@ function HomePage() {
             <Leaf className="h-4 w-4 text-primary" />
             Rooted — South Africa's eco-friendly marketplace
           </p>
-          <p>10% commission · R240/month seller subscription</p>
+          <p>Sellers list free · R240/month platform fee and 10% commission from sales</p>
         </div>
       </footer>
     </div>

@@ -103,7 +103,7 @@ function AuthPage() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {isSeller
-            ? "Flat R240/month subscription · 10% commission on sales."
+            ? "R0 upfront · R240/month platform fee and 10% commission deducted from your sales."
             : "Free to join · track your orders and open a return ticket any time."}
         </p>
 
