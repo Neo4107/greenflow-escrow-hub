@@ -221,10 +221,15 @@ export const startSubscriptionCheckout = createServerFn({ method: "POST" })
 
     const { data: store } = await supabase
       .from("sellers")
-      .select("id, store_name")
+      .select("id, store_name, outstanding_fee_cents")
       .eq("user_id", userId)
       .maybeSingle();
     if (!store) throw new Error("Create your store first.");
+
+    // Sellers settle whatever they owe; if nothing is outstanding they can
+    // prepay one month of the fixed platform fee.
+    const amountCents =
+      store.outstanding_fee_cents > 0 ? store.outstanding_fee_cents : SUBSCRIPTION_FEE_CENTS;
 
     const reference = `sub_${store.id.slice(0, 8)}_${Date.now()}`;
     const periodStart = new Date();
@@ -233,7 +238,7 @@ export const startSubscriptionCheckout = createServerFn({ method: "POST" })
 
     await supabase.from("subscription_payments").insert({
       seller_id: store.id,
-      amount_cents: SUBSCRIPTION_FEE_CENTS,
+      amount_cents: amountCents,
       status: "pending",
       gateway_reference: reference,
       period_start: periodStart.toISOString().slice(0, 10),
@@ -245,24 +250,26 @@ export const startSubscriptionCheckout = createServerFn({ method: "POST" })
         gatewayConfigured: false,
         authorizationUrl: null as string | null,
         reference,
+        amountCents,
       };
     }
 
     const email = (claims as { email?: string }).email ?? "";
     const { authorizationUrl } = await initializeSubscriptionCharge({
       email,
-      amountCents: SUBSCRIPTION_FEE_CENTS,
+      amountCents,
       reference,
       callbackUrl: data.returnUrl,
       sellerId: store.id,
     });
 
-    return { gatewayConfigured: true, authorizationUrl, reference };
+    return { gatewayConfigured: true, authorizationUrl, reference, amountCents };
   });
 
 /** Called when Paystack redirects the seller back to the dashboard. */
 export const confirmSubscriptionPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+
   .inputValidator((input: unknown) =>
     z.object({ reference: z.string().min(4).max(120) }).parse(input ?? {}),
   )
