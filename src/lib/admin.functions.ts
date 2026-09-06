@@ -138,7 +138,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
       supabase
         .from("sellers")
         .select(
-          "id, store_name, slug, province, contact_email, is_active_subscription, subscription_status, subscription_fee_cents, next_billing_date, commission_rate, created_at",
+          "id, store_name, slug, province, contact_email, is_active_subscription, subscription_status, subscription_fee_cents, next_billing_date, commission_rate, outstanding_fee_cents, listing_started_at, fee_notice_90d_sent_at, created_at",
         )
         .order("created_at", { ascending: false }),
       supabase
