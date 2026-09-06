@@ -32,12 +32,12 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       {
         name: "description",
         content:
-          "Manage your Rooted store: listings, product review outcomes and your R240 monthly subscription status.",
+          "Manage your Rooted store: listings, product review outcomes and your R240 platform fee balance.",
       },
       { property: "og:title", content: "Seller dashboard — Rooted" },
       {
         property: "og:description",
-        content: "Manage listings, review outcomes and your subscription on Rooted.",
+        content: "Manage listings, review outcomes and your platform fee balance on Rooted.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -428,8 +428,9 @@ function CreateStoreForm({ onCreated }: { onCreated: () => void }) {
         Create your store
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Set up your store, then activate your {formatRands(SUBSCRIPTION_FEE_CENTS)}/month
-        subscription to go live.
+        No upfront fees — set up your store and list today. The{" "}
+        {formatRands(SUBSCRIPTION_FEE_CENTS)} monthly platform fee and 10% commission come off your
+        sales balance.
       </p>
       <form
         className="mt-6 grid gap-4 sm:grid-cols-2"
@@ -504,10 +505,8 @@ function CreateStoreForm({ onCreated }: { onCreated: () => void }) {
 }
 
 function AddProductForm({
-  subscriptionActive,
   onSaved,
 }: {
-  subscriptionActive: boolean;
   onSaved: () => void;
 }) {
   const save = useServerFn(saveProduct);
@@ -565,7 +564,7 @@ function AddProductForm({
     onSuccess: (result) => {
       setSuccess(
         result.status === "approved"
-          ? "Listed. It's live once your subscription is active."
+          ? "Listed and live on the marketplace."
           : "Submitted for admin review — branded listings need certificate approval first.",
       );
       setForm({
@@ -598,13 +597,6 @@ function AddProductForm({
           {open ? "Close" : "New listing"}
         </button>
       </div>
-
-      {!subscriptionActive && (
-        <p className="mt-3 text-sm text-muted-foreground">
-          You can prepare listings now; they become visible to buyers once your subscription is
-          active.
-        </p>
-      )}
 
       {open && (
         <form
