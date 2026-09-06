@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/admin/")({
   head: () => {
     const title = "Admin dashboard — Rooted marketplace control";
     const description =
-      "Monitor seller stores and R240 subscriptions, review pending brand certificates, track escrow balances and work the dispute ticket backlog.";
+      "Monitor seller stores and outstanding R240 platform fee balances, review pending brand certificates, track escrow balances and work the dispute ticket backlog.";
     return {
       meta: [
         { title },
@@ -156,7 +156,7 @@ function AdminDashboard() {
         <header className="space-y-2">
           <h1 className="font-serif text-4xl font-semibold tracking-tight">Admin dashboard</h1>
           <p className="max-w-2xl text-muted-foreground">
-            Marketplace control room: seller subscriptions, brand certificate reviews, escrow
+            Marketplace control room: seller fee balances, brand certificate reviews, escrow
             positions and the dispute backlog.
           </p>
         </header>
@@ -179,7 +179,7 @@ function AdminDashboard() {
                 icon={<Store className="h-4 w-4" />}
                 label="Active stores"
                 value={`${activeSellers.length}/${data?.sellers.length ?? 0}`}
-                hint="Sellers with a paid R240 subscription"
+                hint="Stores currently listing"
               />
               <StatCard
                 icon={<FileCheck2 className="h-4 w-4" />}
@@ -290,9 +290,9 @@ function AdminDashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Seller listings &amp; subscriptions</CardTitle>
+                <CardTitle>Seller listings &amp; fee balances</CardTitle>
                 <CardDescription>
-                  Every store, its R240 billing state and current escrow position.
+                  Every store, its outstanding R240 platform fee balance and current escrow position.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">

@@ -46,7 +46,7 @@ function StorePage() {
             <Store className="mx-auto h-10 w-10 text-muted-foreground" />
             <h1 className="mt-3 font-serif text-2xl font-semibold">Store unavailable</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              This store either doesn't exist or its subscription isn't active right now.
+              We couldn't find that store — it may have been closed.
             </p>
             <Link
               to="/stores"
