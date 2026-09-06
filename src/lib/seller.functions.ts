@@ -51,6 +51,17 @@ export const getMyAccount = createServerFn({ method: "GET" })
     }
 
 
+    // Bring this seller's monthly platform fee charges up to date before reading.
+    const { accrueMonthlyPlatformFees } = await import("./fees.server");
+    await accrueMonthlyPlatformFees({ sellerId: store.id });
+
+    const { data: freshStore } = await supabase
+      .from("sellers")
+      .select("*")
+      .eq("id", store.id)
+      .maybeSingle();
+    const currentStore = freshStore ?? store;
+
     const [{ data: products }, { data: payments }, { data: certificates }, { data: ledger }] =
       await Promise.all([
         supabase
@@ -79,20 +90,20 @@ export const getMyAccount = createServerFn({ method: "GET" })
 
     const { FEE_NOTICE_DAYS } = await import("./eco");
     const daysListed = Math.floor(
-      (Date.now() - new Date(store.listing_started_at).getTime()) / 86_400_000,
+      (Date.now() - new Date(currentStore.listing_started_at).getTime()) / 86_400_000,
     );
 
     return {
-      store,
+      store: currentStore,
       products: products ?? [],
       payments: payments ?? [],
       certificates: certificates ?? [],
       ledger: ledger ?? [],
-      outstandingFeeCents: store.outstanding_fee_cents,
+      outstandingFeeCents: currentStore.outstanding_fee_cents,
       daysListed,
       showNinetyDayNotice:
-        store.outstanding_fee_cents > 0 &&
-        (daysListed >= FEE_NOTICE_DAYS || Boolean(store.fee_notice_90d_sent_at)),
+        currentStore.outstanding_fee_cents > 0 &&
+        (daysListed >= FEE_NOTICE_DAYS || Boolean(currentStore.fee_notice_90d_sent_at)),
       isAdmin: (roles ?? []).some((r) => r.role === "admin"),
     };
   });
