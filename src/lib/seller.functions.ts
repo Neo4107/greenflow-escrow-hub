@@ -42,9 +42,14 @@ export const getMyAccount = createServerFn({ method: "GET" })
         products: [],
         payments: [],
         certificates: [],
+        ledger: [],
+        outstandingFeeCents: 0,
+        daysListed: 0,
+        showNinetyDayNotice: false,
         isAdmin: (roles ?? []).some((r) => r.role === "admin"),
       };
     }
+
 
     const [{ data: products }, { data: payments }, { data: certificates }, { data: ledger }] =
       await Promise.all([
