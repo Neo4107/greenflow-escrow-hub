@@ -81,7 +81,7 @@ function DashboardPage() {
     );
   }
 
-  const { store, products, payments, certificates } = data;
+  const { store, products, payments, certificates, ledger } = data;
 
   return (
     <Shell>
@@ -90,29 +90,33 @@ function DashboardPage() {
           <h1 className="font-serif text-3xl font-semibold">{store.store_name}</h1>
           <p className="text-sm text-muted-foreground">{store.tagline ?? "Your Rooted store"}</p>
         </div>
-        {store.is_active_subscription && (
-          <Link
-            to="/store/$slug"
-            params={{ slug: store.slug }}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
-          >
-            <ExternalLink className="h-4 w-4" />
-            View public store
-          </Link>
-        )}
+        <Link
+          to="/store/$slug"
+          params={{ slug: store.slug }}
+          className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
+        >
+          <ExternalLink className="h-4 w-4" />
+          View public store
+        </Link>
       </div>
 
-      <SubscriptionCard store={store} payments={payments} />
+      <FeeBalanceCard
+        store={store}
+        payments={payments}
+        ledger={ledger}
+        outstandingFeeCents={data.outstandingFeeCents}
+        showNinetyDayNotice={data.showNinetyDayNotice}
+      />
 
       <ProductsCard products={products} certificates={certificates} />
 
       <AddProductForm
-        subscriptionActive={store.is_active_subscription}
         onSaved={() => queryClient.invalidateQueries({ queryKey: ["my-account"] })}
       />
     </Shell>
   );
 }
+
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
