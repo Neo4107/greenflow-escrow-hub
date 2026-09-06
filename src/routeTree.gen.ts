@@ -20,6 +20,7 @@ import { Route as StoreSlugRouteImport } from './routes/store.$slug'
 import { Route as StoresIndexRouteImport } from './routes/stores.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminDisputesRouteImport } from './routes/_authenticated/admin.disputes'
+import { Route as ApiPublicAccruePlatformFeesRouteImport } from './routes/api/public/accrue-platform-fees'
 import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/public/paystack-webhook'
 import { Route as ApiPublicReleaseEscrowRouteImport } from './routes/api/public/release-escrow'
 
@@ -78,6 +79,12 @@ const AuthenticatedAdminDisputesRoute =
     path: '/admin/disputes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicAccruePlatformFeesRoute =
+  ApiPublicAccruePlatformFeesRouteImport.update({
+    id: '/api/public/accrue-platform-fees',
+    path: '/api/public/accrue-platform-fees',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPaystackWebhookRoute =
   ApiPublicPaystackWebhookRouteImport.update({
     id: '/api/public/paystack-webhook',
@@ -100,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/store/$slug': typeof StoreSlugRoute
   '/stores/': typeof StoresIndexRoute
   '/admin/disputes': typeof AuthenticatedAdminDisputesRoute
+  '/api/public/accrue-platform-fees': typeof ApiPublicAccruePlatformFeesRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/api/public/release-escrow': typeof ApiPublicReleaseEscrowRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -114,6 +122,7 @@ export interface FileRoutesByTo {
   '/store/$slug': typeof StoreSlugRoute
   '/stores': typeof StoresIndexRoute
   '/admin/disputes': typeof AuthenticatedAdminDisputesRoute
+  '/api/public/accrue-platform-fees': typeof ApiPublicAccruePlatformFeesRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/api/public/release-escrow': typeof ApiPublicReleaseEscrowRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -130,6 +139,7 @@ export interface FileRoutesById {
   '/store/$slug': typeof StoreSlugRoute
   '/stores/': typeof StoresIndexRoute
   '/_authenticated/admin/disputes': typeof AuthenticatedAdminDisputesRoute
+  '/api/public/accrue-platform-fees': typeof ApiPublicAccruePlatformFeesRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/api/public/release-escrow': typeof ApiPublicReleaseEscrowRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/stores/'
     | '/admin/disputes'
+    | '/api/public/accrue-platform-fees'
     | '/api/public/paystack-webhook'
     | '/api/public/release-escrow'
     | '/admin/'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/stores'
     | '/admin/disputes'
+    | '/api/public/accrue-platform-fees'
     | '/api/public/paystack-webhook'
     | '/api/public/release-escrow'
     | '/admin'
@@ -175,6 +187,7 @@ export interface FileRouteTypes {
     | '/store/$slug'
     | '/stores/'
     | '/_authenticated/admin/disputes'
+    | '/api/public/accrue-platform-fees'
     | '/api/public/paystack-webhook'
     | '/api/public/release-escrow'
     | '/_authenticated/admin/'
@@ -187,6 +200,7 @@ export interface RootRouteChildren {
   ProductSlugRoute: typeof ProductSlugRoute
   StoreSlugRoute: typeof StoreSlugRoute
   StoresIndexRoute: typeof StoresIndexRoute
+  ApiPublicAccruePlatformFeesRoute: typeof ApiPublicAccruePlatformFeesRoute
   ApiPublicPaystackWebhookRoute: typeof ApiPublicPaystackWebhookRoute
   ApiPublicReleaseEscrowRoute: typeof ApiPublicReleaseEscrowRoute
 }
@@ -270,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDisputesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/accrue-platform-fees': {
+      id: '/api/public/accrue-platform-fees'
+      path: '/api/public/accrue-platform-fees'
+      fullPath: '/api/public/accrue-platform-fees'
+      preLoaderRoute: typeof ApiPublicAccruePlatformFeesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/paystack-webhook': {
       id: '/api/public/paystack-webhook'
       path: '/api/public/paystack-webhook'
@@ -313,6 +334,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProductSlugRoute: ProductSlugRoute,
   StoreSlugRoute: StoreSlugRoute,
   StoresIndexRoute: StoresIndexRoute,
+  ApiPublicAccruePlatformFeesRoute: ApiPublicAccruePlatformFeesRoute,
   ApiPublicPaystackWebhookRoute: ApiPublicPaystackWebhookRoute,
   ApiPublicReleaseEscrowRoute: ApiPublicReleaseEscrowRoute,
 }

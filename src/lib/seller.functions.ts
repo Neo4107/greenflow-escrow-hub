@@ -46,33 +46,52 @@ export const getMyAccount = createServerFn({ method: "GET" })
       };
     }
 
-    const [{ data: products }, { data: payments }, { data: certificates }] = await Promise.all([
-      supabase
-        .from("products")
-        .select("*")
-        .eq("seller_id", store.id)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("subscription_payments")
-        .select("*")
-        .eq("seller_id", store.id)
-        .order("created_at", { ascending: false })
-        .limit(12),
-      supabase
-        .from("brand_certificates")
-        .select("*")
-        .eq("seller_id", store.id)
-        .order("created_at", { ascending: false }),
-    ]);
+    const [{ data: products }, { data: payments }, { data: certificates }, { data: ledger }] =
+      await Promise.all([
+        supabase
+          .from("products")
+          .select("*")
+          .eq("seller_id", store.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("subscription_payments")
+          .select("*")
+          .eq("seller_id", store.id)
+          .order("created_at", { ascending: false })
+          .limit(12),
+        supabase
+          .from("brand_certificates")
+          .select("*")
+          .eq("seller_id", store.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("platform_fee_ledger")
+          .select("*")
+          .eq("seller_id", store.id)
+          .order("created_at", { ascending: false })
+          .limit(24),
+      ]);
+
+    const { FEE_NOTICE_DAYS } = await import("./eco");
+    const daysListed = Math.floor(
+      (Date.now() - new Date(store.listing_started_at).getTime()) / 86_400_000,
+    );
 
     return {
       store,
       products: products ?? [],
       payments: payments ?? [],
       certificates: certificates ?? [],
+      ledger: ledger ?? [],
+      outstandingFeeCents: store.outstanding_fee_cents,
+      daysListed,
+      showNinetyDayNotice:
+        store.outstanding_fee_cents > 0 &&
+        (daysListed >= FEE_NOTICE_DAYS || Boolean(store.fee_notice_90d_sent_at)),
       isAdmin: (roles ?? []).some((r) => r.role === "admin"),
     };
   });
+
 
 export const createStore = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
