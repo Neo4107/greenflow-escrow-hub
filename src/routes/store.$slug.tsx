@@ -123,12 +123,12 @@ function StorePage() {
                     </div>
                     <div className="p-4">
                       <Link
-                    to="/product/$slug"
-                    params={{ slug: product.slug }}
-                    className="line-clamp-1 block font-medium hover:text-primary"
-                  >
-                    {product.title}
-                  </Link>
+                        to="/product/$slug"
+                        params={{ slug: product.slug }}
+                        className="line-clamp-1 block font-medium hover:text-primary"
+                      >
+                        {product.title}
+                      </Link>
                       {product.eco_attributes.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {product.eco_attributes.map((attr) => (

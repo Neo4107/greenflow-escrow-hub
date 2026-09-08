@@ -144,7 +144,11 @@ export async function deductFeesFromPayout(params: {
 
   const outstanding = seller?.outstanding_fee_cents ?? 0;
   if (outstanding <= 0 || params.payoutCents <= 0) {
-    return { deductedCents: 0, remainingPayoutCents: params.payoutCents, outstandingCents: outstanding };
+    return {
+      deductedCents: 0,
+      remainingPayoutCents: params.payoutCents,
+      outstandingCents: outstanding,
+    };
   }
 
   const deducted = Math.min(outstanding, params.payoutCents);
@@ -168,7 +172,11 @@ export async function deductFeesFromPayout(params: {
     payoutId: params.payoutId,
   });
 
-  return { deductedCents: deducted, remainingPayoutCents: remainingPayout, outstandingCents: balance };
+  return {
+    deductedCents: deducted,
+    remainingPayoutCents: remainingPayout,
+    outstandingCents: balance,
+  };
 }
 
 /** Applies a successful out-of-pocket fee payment against the seller's balance. */

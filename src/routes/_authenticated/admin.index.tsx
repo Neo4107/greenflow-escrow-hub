@@ -89,9 +89,12 @@ function AdminDashboard() {
     let commissionCents = 0;
 
     for (const payout of payouts) {
-      const row =
-        perSeller.get(payout.seller_id) ??
-        { escrowCents: 0, releasableCents: 0, paidCents: 0, commissionCents: 0 };
+      const row = perSeller.get(payout.seller_id) ?? {
+        escrowCents: 0,
+        releasableCents: 0,
+        paidCents: 0,
+        commissionCents: 0,
+      };
       row.commissionCents += payout.commission_cents;
       commissionCents += payout.commission_cents;
       if (payout.status === "escrow") {
@@ -134,8 +137,7 @@ function AdminDashboard() {
   });
 
   const subscriptionMutation = useMutation({
-    mutationFn: async (input: { sellerId: string; active: boolean }) =>
-      setActive({ data: input }),
+    mutationFn: async (input: { sellerId: string; active: boolean }) => setActive({ data: input }),
     onSuccess: (_result, input) => {
       toast.success(input.active ? "Store unlocked" : "Store suspended");
       queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
@@ -296,7 +298,8 @@ function AdminDashboard() {
               <CardHeader>
                 <CardTitle>Seller listings &amp; fee balances</CardTitle>
                 <CardDescription>
-                  Every store, its outstanding R240 platform fee balance and current escrow position.
+                  Every store, its outstanding R240 platform fee balance and current escrow
+                  position.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -371,10 +374,7 @@ function AdminDashboard() {
                               products.filter((p) => p.status === "pending_admin_review").length,
                             )}
                           />
-                          <Figure
-                            label="In escrow"
-                            value={formatRands(money?.escrowCents ?? 0)}
-                          />
+                          <Figure label="In escrow" value={formatRands(money?.escrowCents ?? 0)} />
                           <Figure
                             label="Releasable"
                             value={formatRands(money?.releasableCents ?? 0)}
@@ -408,7 +408,9 @@ function AdminDashboard() {
                       <div className="space-y-1">
                         <p className="flex flex-wrap items-center gap-2 font-medium">
                           {ticket.reason}
-                          <Badge variant="outline">{TICKET_LABELS[ticket.status] ?? ticket.status}</Badge>
+                          <Badge variant="outline">
+                            {TICKET_LABELS[ticket.status] ?? ticket.status}
+                          </Badge>
                           {ticket.item_damaged ? (
                             <Badge variant="destructive">Damaged</Badge>
                           ) : null}

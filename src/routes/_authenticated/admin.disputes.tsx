@@ -90,7 +90,9 @@ function DisputeConsole() {
     const all = data?.tickets ?? [];
     if (filter === "all") return all;
     const resolved = (status: string) => status.startsWith("resolved") || status === "rejected";
-    return all.filter((ticket) => (filter === "resolved" ? resolved(ticket.status) : !resolved(ticket.status)));
+    return all.filter((ticket) =>
+      filter === "resolved" ? resolved(ticket.status) : !resolved(ticket.status),
+    );
   }, [data, filter]);
 
   const active = (data?.tickets ?? []).find((ticket) => ticket.id === activeId) ?? null;
@@ -317,7 +319,9 @@ function DisputeConsole() {
                           setStatus({ data: { ticketId: active.id, status: "awaiting_return" } })
                             .then(() => {
                               toast.success("Marked as awaiting return.");
-                              return queryClient.invalidateQueries({ queryKey: ["admin-disputes"] });
+                              return queryClient.invalidateQueries({
+                                queryKey: ["admin-disputes"],
+                              });
                             })
                             .catch(() => toast.error("Could not update the ticket."))
                         }
@@ -331,7 +335,9 @@ function DisputeConsole() {
                           setStatus({ data: { ticketId: active.id, status: "escalated" } })
                             .then(() => {
                               toast.success("Escalated.");
-                              return queryClient.invalidateQueries({ queryKey: ["admin-disputes"] });
+                              return queryClient.invalidateQueries({
+                                queryKey: ["admin-disputes"],
+                              });
                             })
                             .catch(() => toast.error("Could not update the ticket."))
                         }
@@ -363,13 +369,19 @@ function DisputeConsole() {
                           className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3 text-sm"
                         >
                           <span>
-                            <span className="font-medium">{row.caption || row.file_path.split("/").pop()}</span>
+                            <span className="font-medium">
+                              {row.caption || row.file_path.split("/").pop()}
+                            </span>
                             <span className="ml-2 text-muted-foreground">
                               by {row.uploader_role} ·{" "}
                               {new Date(row.created_at).toLocaleDateString("en-ZA")}
                             </span>
                           </span>
-                          <Button size="sm" variant="outline" onClick={() => viewEvidence(row.file_path)}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => viewEvidence(row.file_path)}
+                          >
                             View
                           </Button>
                         </li>
@@ -422,8 +434,8 @@ function DisputeConsole() {
                       <Undo2 className="h-5 w-5 text-primary" /> Resolve dispute
                     </CardTitle>
                     <CardDescription>
-                      A refund reverses the seller&apos;s escrowed share; a partial refund leaves the
-                      remainder in escrow.
+                      A refund reverses the seller&apos;s escrowed share; a partial refund leaves
+                      the remainder in escrow.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">

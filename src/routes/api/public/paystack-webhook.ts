@@ -12,7 +12,6 @@ export const Route = createFileRoute("/api/public/paystack-webhook")({
           return Response.json({ ok: false, reason: "gateway_unconfigured" });
         }
 
-
         const raw = await request.text();
         const signature = request.headers.get("x-paystack-signature") ?? "";
         const expected = createHmac("sha512", secret).update(raw).digest("hex");
@@ -50,7 +49,9 @@ export const Route = createFileRoute("/api/public/paystack-webhook")({
               // Marketplace keeps the 10%; the seller's 90% enters 14-day escrow.
               await recordOrderPaid({
                 reference,
-                ...(typeof event.data.amount === "number" ? { amountCents: event.data.amount } : {}),
+                ...(typeof event.data.amount === "number"
+                  ? { amountCents: event.data.amount }
+                  : {}),
               });
             } else if (event.event === "charge.failed") {
               await markOrderFailed({ reference });
@@ -69,9 +70,8 @@ export const Route = createFileRoute("/api/public/paystack-webhook")({
 
         if (purpose && purpose !== "seller_subscription") return new Response("ok");
 
-        const { activateSubscriptionForReference, markSubscriptionPastDue } = await import(
-          "@/lib/subscription.server"
-        );
+        const { activateSubscriptionForReference, markSubscriptionPastDue } =
+          await import("@/lib/subscription.server");
 
         try {
           if (event.event === "charge.success" && event.data?.status === "success") {

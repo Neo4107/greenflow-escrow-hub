@@ -132,7 +132,10 @@ export const confirmOrderPayment = createServerFn({ method: "POST" })
       amountCents: verified.amount,
     });
 
-    return { paid: true as const, escrowReleaseAt: "escrowReleaseAt" in result ? result.escrowReleaseAt : null };
+    return {
+      paid: true as const,
+      escrowReleaseAt: "escrowReleaseAt" in result ? result.escrowReleaseAt : null,
+    };
   });
 
 export const listMyOrders = createServerFn({ method: "GET" })
@@ -171,7 +174,8 @@ export const listMyPayouts = createServerFn({ method: "GET" })
       .select("id")
       .eq("user_id", userId)
       .maybeSingle();
-    if (!store) return { payouts: [], totals: { escrow: 0, releasable: 0, paid: 0, commission: 0 } };
+    if (!store)
+      return { payouts: [], totals: { escrow: 0, releasable: 0, paid: 0, commission: 0 } };
 
     const { data: payouts } = await supabase
       .from("seller_payouts")

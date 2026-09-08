@@ -158,7 +158,10 @@ function AccountPage() {
                       {data.store.store_name}
                     </Link>{" "}
                     — manage listings in the{" "}
-                    <Link to="/dashboard" className="text-primary underline-offset-4 hover:underline">
+                    <Link
+                      to="/dashboard"
+                      className="text-primary underline-offset-4 hover:underline"
+                    >
                       seller dashboard
                     </Link>
                     .
@@ -166,7 +169,10 @@ function AccountPage() {
                 ) : (
                   <p className="text-sm text-muted-foreground">
                     Want to sell your own eco products?{" "}
-                    <Link to="/dashboard" className="text-primary underline-offset-4 hover:underline">
+                    <Link
+                      to="/dashboard"
+                      className="text-primary underline-offset-4 hover:underline"
+                    >
                       Open a store
                     </Link>{" "}
                     for R240/month.
@@ -262,15 +268,7 @@ function AccountPage() {
   );
 }
 
-function Stat({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <Card>
       <CardHeader className="pb-2">

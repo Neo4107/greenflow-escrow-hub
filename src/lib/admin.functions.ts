@@ -169,7 +169,9 @@ export const getAdminOverview = createServerFn({ method: "GET" })
         .limit(500),
       supabase
         .from("orders")
-        .select("id, buyer_email, subtotal_cents, commission_cents, payout_cents, status, created_at")
+        .select(
+          "id, buyer_email, subtotal_cents, commission_cents, payout_cents, status, created_at",
+        )
         .order("created_at", { ascending: false })
         .limit(500),
     ]);

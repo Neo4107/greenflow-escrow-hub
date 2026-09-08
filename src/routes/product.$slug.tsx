@@ -10,7 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getProductBySlug } from "@/lib/marketplace.functions";
 import { startOrderCheckout, confirmOrderPayment } from "@/lib/orders.functions";
-import { COMMISSION_RATE, ECO_LABELS, ESCROW_DAYS, commissionBreakdown, formatRands } from "@/lib/eco";
+import {
+  COMMISSION_RATE,
+  ECO_LABELS,
+  ESCROW_DAYS,
+  commissionBreakdown,
+  formatRands,
+} from "@/lib/eco";
 
 export const Route = createFileRoute("/product/$slug")({
   head: ({ params }) => {
@@ -75,7 +81,11 @@ function ProductPage() {
     setBusy(true);
     try {
       const result = await checkout({
-        data: { productSlug: slug, quantity, returnUrl: window.location.origin + `/product/${slug}` },
+        data: {
+          productSlug: slug,
+          quantity,
+          returnUrl: window.location.origin + `/product/${slug}`,
+        },
       });
       if (result.gatewayConfigured && result.authorizationUrl) {
         window.location.href = result.authorizationUrl;
@@ -163,7 +173,9 @@ function ProductPage() {
 
               <Button onClick={buyNow} disabled={busy || product.stock < 1} size="lg">
                 {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {product.stock < 1 ? "Sold out" : `Pay ${formatRands(product.price_cents * quantity)}`}
+                {product.stock < 1
+                  ? "Sold out"
+                  : `Pay ${formatRands(product.price_cents * quantity)}`}
               </Button>
 
               {split ? (
