@@ -80,7 +80,6 @@ export async function recordOrderPaid(params: { reference: string; amountCents?:
     }
   }
 
-
   // Reserve stock for the paid items.
   for (const item of items ?? []) {
     const { data: product } = await supabaseAdmin
@@ -103,7 +102,6 @@ export async function recordOrderPaid(params: { reference: string; amountCents?:
     platformFeeDeductedCents: feeDeductedCents,
     escrowReleaseAt: releaseAt.toISOString(),
   };
-
 }
 
 export async function markOrderFailed(params: { reference: string; refunded?: boolean }) {

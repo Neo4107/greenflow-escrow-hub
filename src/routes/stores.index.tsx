@@ -46,7 +46,10 @@ function StoresPage() {
         {isLoading ? (
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-40 animate-pulse rounded-2xl border border-border bg-card" />
+              <div
+                key={i}
+                className="h-40 animate-pulse rounded-2xl border border-border bg-card"
+              />
             ))}
           </div>
         ) : stores.length === 0 ? (

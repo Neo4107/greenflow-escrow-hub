@@ -242,8 +242,9 @@ export const resolveDispute = createServerFn({ method: "POST" })
       reject: "rejected",
     } as const;
 
-    let reversal: Awaited<ReturnType<typeof import("./disputes.server").reverseEscrowForDispute>> | null =
-      null;
+    let reversal: Awaited<
+      ReturnType<typeof import("./disputes.server").reverseEscrowForDispute>
+    > | null = null;
 
     if (data.outcome === "refund" && data.refundCents > 0) {
       const { reverseEscrowForDispute } = await import("./disputes.server");

@@ -9,24 +9,33 @@ export const getMyBuyerAccount = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
 
-    const [{ data: profile }, { data: roles }, { data: orders }, { data: tickets }, { data: store }] =
-      await Promise.all([
-        supabase.from("profiles").select("id, full_name, email, created_at").eq("id", userId).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", userId),
-        supabase
-          .from("orders")
-          .select("id, gateway_reference, status, subtotal_cents, paid_at, created_at")
-          .eq("buyer_user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(20),
-        supabase
-          .from("return_requests")
-          .select("id, order_id, order_item_id, reason, status, requested_outcome, created_at")
-          .eq("buyer_user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(20),
-        supabase.from("sellers").select("id, store_name, slug").eq("user_id", userId).maybeSingle(),
-      ]);
+    const [
+      { data: profile },
+      { data: roles },
+      { data: orders },
+      { data: tickets },
+      { data: store },
+    ] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, full_name, email, created_at")
+        .eq("id", userId)
+        .maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", userId),
+      supabase
+        .from("orders")
+        .select("id, gateway_reference, status, subtotal_cents, paid_at, created_at")
+        .eq("buyer_user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase
+        .from("return_requests")
+        .select("id, order_id, order_item_id, reason, status, requested_outcome, created_at")
+        .eq("buyer_user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase.from("sellers").select("id, store_name, slug").eq("user_id", userId).maybeSingle(),
+    ]);
 
     const orderIds = (orders ?? []).map((order) => order.id);
     const { data: items } = orderIds.length

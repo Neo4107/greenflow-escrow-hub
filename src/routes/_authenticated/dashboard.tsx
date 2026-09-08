@@ -22,7 +22,13 @@ import {
   confirmSubscriptionPayment,
 } from "@/lib/seller.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { ECO_ATTRIBUTES, ECO_LABELS, PROVINCES, formatRands, SUBSCRIPTION_FEE_CENTS } from "@/lib/eco";
+import {
+  ECO_ATTRIBUTES,
+  ECO_LABELS,
+  PROVINCES,
+  formatRands,
+  SUBSCRIPTION_FEE_CENTS,
+} from "@/lib/eco";
 import { SiteHeader } from "@/components/site-header";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -76,7 +82,9 @@ function DashboardPage() {
   if (!data?.store) {
     return (
       <Shell>
-        <CreateStoreForm onCreated={() => queryClient.invalidateQueries({ queryKey: ["my-account"] })} />
+        <CreateStoreForm
+          onCreated={() => queryClient.invalidateQueries({ queryKey: ["my-account"] })}
+        />
       </Shell>
     );
   }
@@ -110,13 +118,10 @@ function DashboardPage() {
 
       <ProductsCard products={products} certificates={certificates} />
 
-      <AddProductForm
-        onSaved={() => queryClient.invalidateQueries({ queryKey: ["my-account"] })}
-      />
+      <AddProductForm onSaved={() => queryClient.invalidateQueries({ queryKey: ["my-account"] })} />
     </Shell>
   );
 }
-
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -172,8 +177,7 @@ function FeeBalanceCard({
   }, []);
 
   const checkout = useMutation({
-    mutationFn: () =>
-      startCheckout({ data: { returnUrl: `${window.location.origin}/dashboard` } }),
+    mutationFn: () => startCheckout({ data: { returnUrl: `${window.location.origin}/dashboard` } }),
     onSuccess: (result) => {
       if (result.authorizationUrl) window.location.href = result.authorizationUrl;
       else
@@ -255,9 +259,9 @@ function FeeBalanceCard({
         </div>
       ) : (
         <p className="mt-4 rounded-lg bg-secondary/40 p-3 text-sm text-secondary-foreground">
-          Your listings stay active indefinitely unless removed by administration for breaking market
-          rules. When you make a sale, the platform fee and commission come off your sales balance
-          automatically.
+          Your listings stay active indefinitely unless removed by administration for breaking
+          market rules. When you make a sale, the platform fee and commission come off your sales
+          balance automatically.
         </p>
       )}
       {notice && <p className="mt-4 text-sm text-muted-foreground">{notice}</p>}
@@ -326,7 +330,6 @@ function FeeBalanceCard({
   );
 }
 
-
 function ProductsCard({
   products,
   certificates,
@@ -344,7 +347,7 @@ function ProductsCard({
       ) : (
         <ul className="mt-4 space-y-3">
           {products.map((product) => {
-            const style = statusStyles[product.status] ?? statusStyles['draft']!;
+            const style = statusStyles[product.status] ?? statusStyles["draft"]!;
             const StatusIcon = style.icon;
             const certificate = certificates.find((c) => c.product_id === product.id);
             return (
@@ -504,11 +507,7 @@ function CreateStoreForm({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-function AddProductForm({
-  onSaved,
-}: {
-  onSaved: () => void;
-}) {
+function AddProductForm({ onSaved }: { onSaved: () => void }) {
   const save = useServerFn(saveProduct);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({

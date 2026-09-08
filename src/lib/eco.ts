@@ -49,7 +49,6 @@ export const ESCROW_DAYS = 14;
 /** Days an unpaid balance may run before the seller gets the outstanding-balance notice. */
 export const FEE_NOTICE_DAYS = 90;
 
-
 export function formatRands(cents: number): string {
   return new Intl.NumberFormat("en-ZA", {
     style: "currency",

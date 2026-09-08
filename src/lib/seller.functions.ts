@@ -50,7 +50,6 @@ export const getMyAccount = createServerFn({ method: "GET" })
       };
     }
 
-
     // Bring this seller's monthly platform fee charges up to date before reading.
     const { accrueMonthlyPlatformFees } = await import("./fees.server");
     await accrueMonthlyPlatformFees({ sellerId: store.id });
@@ -107,7 +106,6 @@ export const getMyAccount = createServerFn({ method: "GET" })
       isAdmin: (roles ?? []).some((r) => r.role === "admin"),
     };
   });
-
 
 export const createStore = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -222,9 +220,7 @@ export const saveProduct = createServerFn({ method: "POST" })
 
 export const startSubscriptionCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ returnUrl: z.string().url() }).parse(input ?? {}),
-  )
+  .inputValidator((input: unknown) => z.object({ returnUrl: z.string().url() }).parse(input ?? {}))
   .handler(async ({ data, context }) => {
     const { supabase, userId, claims } = context;
     const { SUBSCRIPTION_FEE_CENTS } = await import("./eco");
@@ -304,7 +300,8 @@ export const confirmSubscriptionPayment = createServerFn({ method: "POST" })
     if (!payment) return { activated: false as const, reason: "unknown_reference" as const };
 
     const { paystackKey, verifyTransaction } = await import("./paystack.server");
-    if (!paystackKey()) return { activated: false as const, reason: "gateway_unconfigured" as const };
+    if (!paystackKey())
+      return { activated: false as const, reason: "gateway_unconfigured" as const };
 
     const verified = await verifyTransaction(data.reference);
     if (verified.status !== "success") {

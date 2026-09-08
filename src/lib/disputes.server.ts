@@ -28,7 +28,8 @@ export async function reverseEscrowForDispute(params: {
     await supabaseAdmin
       .from("seller_payouts")
       .update({
-        notes: `${payout.notes ?? ""}\nDispute resolved after payout: recover ${params.refundCents} cents. ${params.reason}`.trim(),
+        notes:
+          `${payout.notes ?? ""}\nDispute resolved after payout: recover ${params.refundCents} cents. ${params.reason}`.trim(),
       })
       .eq("id", payout.id);
     return { reversed: false as const, reason: "already_paid" as const };
@@ -43,7 +44,8 @@ export async function reverseEscrowForDispute(params: {
       status: fullReversal ? "reversed" : payout.status,
       amount_cents: fullReversal ? 0 : remaining,
       released_at: null,
-      notes: `${payout.notes ?? ""}\nEscrow reversed by dispute resolution (${params.refundCents} cents refunded to buyer). ${params.reason}`.trim(),
+      notes:
+        `${payout.notes ?? ""}\nEscrow reversed by dispute resolution (${params.refundCents} cents refunded to buyer). ${params.reason}`.trim(),
     })
     .eq("id", payout.id);
   if (updateError) throw updateError;
