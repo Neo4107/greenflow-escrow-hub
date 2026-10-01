@@ -8,6 +8,13 @@
       "when": 1790841772792,
       "tag": "0000_seller_approval",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790847820070,
+      "tag": "0001_protect_seller_billing_fields",
+      "breakpoints": true
     }
   ]
 }
