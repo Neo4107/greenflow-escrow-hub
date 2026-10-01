@@ -149,7 +149,7 @@ function AdminDashboard() {
   });
 
   const approvalMutation = useMutation({
-    mutationFn: async (input: { sellerId: string; approve: boolean; notes?: string }) =>
+    mutationFn: async (input: { sellerId: string; approve: boolean; notes?: string | undefined }) =>
       reviewSeller({ data: input }),
     onSuccess: (_r, input) => {
       toast.success(input.approve ? "Store approved" : "Store denied");
@@ -242,10 +242,10 @@ function AdminDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {data.sellers.filter((s) => s.approval_status === "pending").length === 0 ? (
+                {(data?.sellers ?? []).filter((s) => s.approval_status === "pending").length === 0 ? (
                   <p className="text-sm text-muted-foreground">No stores waiting for approval.</p>
                 ) : (
-                  data.sellers
+                  (data?.sellers ?? [])
                     .filter((s) => s.approval_status === "pending")
                     .map((s) => (
                       <div
