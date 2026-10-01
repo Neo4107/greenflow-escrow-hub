@@ -555,6 +555,9 @@ export type Database = {
       }
       sellers: {
         Row: {
+          approval_notes: string | null
+          approval_status: Database["public"]["Enums"]["seller_approval_status"]
+          approved_at: string | null
           commission_rate: number
           contact_email: string | null
           created_at: string
@@ -578,6 +581,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          approval_notes?: string | null
+          approval_status?: Database["public"]["Enums"]["seller_approval_status"]
+          approved_at?: string | null
           commission_rate?: number
           contact_email?: string | null
           created_at?: string
@@ -601,6 +607,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          approval_notes?: string | null
+          approval_status?: Database["public"]["Enums"]["seller_approval_status"]
+          approved_at?: string | null
           commission_rate?: number
           contact_email?: string | null
           created_at?: string
@@ -739,6 +748,7 @@ export type Database = {
         | "resolved_replacement"
         | "resolved_credit"
         | "rejected"
+      seller_approval_status: "pending" | "approved" | "rejected"
       subscription_status: "trialing" | "active" | "past_due" | "cancelled"
     }
     CompositeTypes: {
@@ -896,6 +906,7 @@ export const Constants = {
         "resolved_credit",
         "rejected",
       ],
+      seller_approval_status: ["pending", "approved", "rejected"],
       subscription_status: ["trialing", "active", "past_due", "cancelled"],
     },
   },
