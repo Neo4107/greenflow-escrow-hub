@@ -268,7 +268,9 @@ export const startSubscriptionCheckout = createServerFn({ method: "POST" })
       email,
       amountCents,
       reference,
-      callbackUrl: data.returnUrl,
+      callbackUrl: (await import("./safe-redirect.server")).assertSameOriginReturnUrl(
+        data.returnUrl,
+      ),
       sellerId: store.id,
     });
 

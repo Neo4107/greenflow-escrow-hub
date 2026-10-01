@@ -87,7 +87,9 @@ export const startOrderCheckout = createServerFn({ method: "POST" })
       email,
       amountCents: subtotal,
       reference,
-      callbackUrl: data.returnUrl,
+      callbackUrl: (await import("./safe-redirect.server")).assertSameOriginReturnUrl(
+        data.returnUrl,
+      ),
       orderId: order.id,
     });
 
