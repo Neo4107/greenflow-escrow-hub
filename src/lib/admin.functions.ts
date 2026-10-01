@@ -121,6 +121,31 @@ export const setSellerSubscriptionActive = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const reviewSellerApplication = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        sellerId: z.string().uuid(),
+        approve: z.boolean(),
+        notes: z.string().max(1000).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as never);
+    const { error } = await context.supabase
+      .from("sellers")
+      .update({
+        approval_status: data.approve ? "approved" : "rejected",
+        approval_notes: data.notes ?? null,
+        approved_at: data.approve ? new Date().toISOString() : null,
+      })
+      .eq("id", data.sellerId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const getAdminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -138,7 +163,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
       supabase
         .from("sellers")
         .select(
-          "id, store_name, slug, province, contact_email, is_active_subscription, subscription_status, subscription_fee_cents, next_billing_date, commission_rate, outstanding_fee_cents, listing_started_at, fee_notice_90d_sent_at, created_at",
+          "id, store_name, slug, tagline, province, contact_email, approval_status, is_active_subscription, subscription_status, subscription_fee_cents, next_billing_date, commission_rate, outstanding_fee_cents, listing_started_at, fee_notice_90d_sent_at, created_at",
         )
         .order("created_at", { ascending: false }),
       supabase

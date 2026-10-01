@@ -118,7 +118,22 @@ function DashboardPage() {
 
       <ProductsCard products={products} certificates={certificates} />
 
-      <AddProductForm onSaved={() => queryClient.invalidateQueries({ queryKey: ["my-account"] })} />
+      {store.approval_status === "approved" ? (
+        <AddProductForm onSaved={() => queryClient.invalidateQueries({ queryKey: ["my-account"] })} />
+      ) : (
+        <div className="rounded-lg border border-border bg-muted p-6">
+          <h2 className="font-serif text-xl font-semibold">
+            {store.approval_status === "rejected"
+              ? "Your store application was not approved"
+              : "Your store is awaiting approval"}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {store.approval_status === "rejected"
+              ? (store.approval_notes ?? "Please contact us for more details.")
+              : "Our team reviews every new store before it can list products. You'll be able to add listings here once you're approved."}
+          </p>
+        </div>
+      )}
     </Shell>
   );
 }
