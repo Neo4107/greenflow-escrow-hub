@@ -14,6 +14,7 @@ import {
   getAdminOverview,
   getCertificateDownloadUrl,
   reviewCertificate,
+  reviewSellerApplication,
   setSellerSubscriptionActive,
 } from "@/lib/admin.functions";
 
@@ -57,6 +58,7 @@ function AdminDashboard() {
   const review = useServerFn(reviewCertificate);
   const signCertificate = useServerFn(getCertificateDownloadUrl);
   const setActive = useServerFn(setSellerSubscriptionActive);
+  const reviewSeller = useServerFn(reviewSellerApplication);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const { data, isLoading, error } = useQuery({
@@ -146,6 +148,16 @@ function AdminDashboard() {
     onSettled: () => setBusyId(null),
   });
 
+  const approvalMutation = useMutation({
+    mutationFn: async (input: { sellerId: string; approve: boolean; notes?: string | undefined }) =>
+      reviewSeller({ data: input }),
+    onSuccess: (_r, input) => {
+      toast.success(input.approve ? "Store approved" : "Store denied");
+      queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
   async function viewCertificate(path: string) {
     try {
       const { url } = await signCertificate({ data: { path } });
@@ -219,6 +231,56 @@ function AdminDashboard() {
                 <Figure label="Seller escrow held" value={formatRands(escrow.heldCents)} />
                 <Figure label="Releasable now" value={formatRands(escrow.releasableCents)} />
                 <Figure label="Paid out" value={formatRands(escrow.paidCents)} />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Store applications</CardTitle>
+                <CardDescription>
+                  New sellers can't list products until you approve their store.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {(data?.sellers ?? []).filter((s) => s.approval_status === "pending").length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No stores waiting for approval.</p>
+                ) : (
+                  (data?.sellers ?? [])
+                    .filter((s) => s.approval_status === "pending")
+                    .map((s) => (
+                      <div
+                        key={s.id}
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3"
+                      >
+                        <div>
+                          <p className="font-medium">{s.store_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {[s.tagline, s.province, s.contact_email].filter(Boolean).join(" · ")}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            disabled={approvalMutation.isPending}
+                            onClick={() => approvalMutation.mutate({ sellerId: s.id, approve: true })}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={approvalMutation.isPending}
+                            onClick={() => {
+                              const notes = window.prompt("Reason for denying (shown to the seller):") ?? undefined;
+                              approvalMutation.mutate({ sellerId: s.id, approve: false, notes });
+                            }}
+                          >
+                            Deny
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                )}
               </CardContent>
             </Card>
 

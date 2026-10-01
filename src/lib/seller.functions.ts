@@ -159,10 +159,12 @@ export const saveProduct = createServerFn({ method: "POST" })
 
     const { data: store } = await supabase
       .from("sellers")
-      .select("id")
+      .select("id, approval_status")
       .eq("user_id", userId)
       .maybeSingle();
     if (!store) throw new Error("Create your store before adding products.");
+    if (store.approval_status !== "approved")
+      throw new Error("Your store must be approved by an admin before you can list products.");
 
     if (data.isBranded && (!data.brandName || !data.certificateDocumentPath)) {
       throw new Error(
