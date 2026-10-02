@@ -8,7 +8,9 @@ import {
   Clock,
   CreditCard,
   ExternalLink,
+  ImagePlus,
   Loader2,
+  X,
   Plus,
   Sparkles,
   Store,
@@ -542,6 +544,13 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
   });
   const [attributes, setAttributes] = useState<string[]>([]);
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  useEffect(() => {
+    const urls = photos.map((f) => URL.createObjectURL(f));
+    setPreviews(urls);
+    return () => urls.forEach((u) => URL.revokeObjectURL(u));
+  }, [photos]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -563,6 +572,20 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
         certificateDocumentPath = path;
       }
 
+      const imagePaths: string[] = [];
+      if (photos.length > 0) {
+        const { data: user } = await supabase.auth.getUser();
+        for (const file of photos) {
+          const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+          const path = `${user.user?.id}/${crypto.randomUUID()}.${ext}`;
+          const { error: uploadError } = await supabase.storage
+            .from("product-images")
+            .upload(path, file, { contentType: file.type, upsert: false });
+          if (uploadError) throw new Error(`Photo upload failed: ${uploadError.message}`);
+          imagePaths.push(path);
+        }
+      }
+
       return save({
         data: {
           title: form.title,
@@ -570,7 +593,7 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
           category: form.category || undefined,
           priceRands: Number(form.priceRands),
           stock: Number(form.stock),
-          imageUrl: form.imageUrl || undefined,
+          imagePaths,
           ecoAttributes: attributes,
           isBranded: form.isBranded,
           brandName: form.isBranded ? form.brandName : undefined,
@@ -598,6 +621,7 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
       });
       setAttributes([]);
       setCertificateFile(null);
+      setPhotos([]);
       onSaved();
     },
     onError: (e) => setError(e instanceof Error ? e.message : "Could not save the product."),
@@ -668,14 +692,56 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
             />
           </Field>
           <div className="sm:col-span-2">
-            <Field label="Image URL">
-              <input
-                type="url"
-                value={form.imageUrl}
-                onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                className={inputClass}
-              />
-            </Field>
+            <p className="text-sm font-medium">Product photos</p>
+            <p className="text-xs text-muted-foreground">
+              Up to {MAX_PHOTOS} photos, 8 MB each. The first photo is the cover.
+            </p>
+            <div className="mt-2 grid grid-cols-3 gap-3 sm:grid-cols-6">
+              {photos.map((file, index) => (
+                <div
+                  key={`${file.name}-${index}`}
+                  className="relative aspect-square overflow-hidden rounded-xl border border-border bg-muted"
+                >
+                  <img
+                    src={previews[index]}
+                    alt={`Photo ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                  {index === 0 ? (
+                    <span className="absolute left-1 top-1 rounded-full bg-primary px-2 py-0.5 text-[10px] text-primary-foreground">
+                      Cover
+                    </span>
+                  ) : null}
+                  <button
+                    type="button"
+                    aria-label={`Remove photo ${index + 1}`}
+                    onClick={() => setPhotos(photos.filter((_, i) => i !== index))}
+                    className="absolute right-1 top-1 rounded-full bg-background/90 p-1 hover:bg-background"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              {photos.length < MAX_PHOTOS ? (
+                <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border text-xs text-muted-foreground hover:bg-accent">
+                  <ImagePlus className="h-5 w-5" />
+                  Add photo
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    className="sr-only"
+                    onChange={(e) => {
+                      const picked = Array.from(e.target.files ?? []).filter(
+                        (f) => f.size <= 8 * 1024 * 1024,
+                      );
+                      setPhotos([...photos, ...picked].slice(0, MAX_PHOTOS));
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              ) : null}
+            </div>
           </div>
           <div className="sm:col-span-2">
             <Field label="Description">
