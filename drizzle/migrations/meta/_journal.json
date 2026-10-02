@@ -15,6 +15,13 @@
       "when": 1790847820070,
       "tag": "0001_protect_seller_billing_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790968911133,
+      "tag": "0002_product_images_policies",
+      "breakpoints": true
     }
   ]
 }

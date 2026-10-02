@@ -34,14 +34,16 @@ export const listProducts = createServerFn({ method: "GET" })
       for (const s of sellers ?? []) stores[s.id] = s.store_name;
     }
 
-    return { products: products ?? [], stores, error: null as string | null };
+    const { resolveProductImages } = await import("./product-images.server");
+    const resolved = await resolveProductImages(supabase, products ?? []);
+    return { products: resolved, stores, error: null as string | null };
   });
 
 export const getProductBySlug = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ slug: z.string().min(1) }).parse(input))
   .handler(async ({ data }) => {
     const supabase = createPublicSupabase();
-    const { data: product } = await supabase
+    const { data: raw } = await supabase
       .from("products")
       .select(
         "id, title, slug, description, price_cents, images, eco_attributes, category, stock, brand_name, is_branded, seller_id",
@@ -49,7 +51,9 @@ export const getProductBySlug = createServerFn({ method: "GET" })
       .eq("slug", data.slug)
       .maybeSingle();
 
-    if (!product) return { product: null, store: null };
+    if (!raw) return { product: null, store: null };
+    const { resolveProductImages } = await import("./product-images.server");
+    const product = (await resolveProductImages(supabase, [raw]))[0] ?? raw;
 
     const { data: store } = await supabase
       .from("sellers")
@@ -88,5 +92,6 @@ export const getStoreBySlug = createServerFn({ method: "GET" })
       .eq("seller_id", store.id)
       .order("created_at", { ascending: false });
 
-    return { store, products: products ?? [] };
+    const { resolveProductImages } = await import("./product-images.server");
+    return { store, products: await resolveProductImages(supabase, products ?? []) };
   });
