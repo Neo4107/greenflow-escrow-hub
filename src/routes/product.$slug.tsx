@@ -42,6 +42,7 @@ function ProductPage() {
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [busy, setBusy] = useState(false);
+  const [activeImage, setActiveImage] = useState(0);
 
   const checkout = useServerFn(startOrderCheckout);
   const confirm = useServerFn(confirmOrderPayment);
@@ -117,19 +118,37 @@ function ProductPage() {
           </div>
         ) : (
           <div className="grid gap-10 md:grid-cols-2">
-            <div className="overflow-hidden rounded-3xl border border-border bg-muted">
-              {product.images?.[0] ? (
-                <img
-                  src={product.images[0]}
-                  alt={product.title}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="flex h-80 items-center justify-center text-muted-foreground">
-                  <Leaf className="h-10 w-10" />
+            <div className="space-y-3">
+              <div className="aspect-square overflow-hidden rounded-3xl border border-border bg-muted">
+                {product.images?.[activeImage] ? (
+                  <img
+                    src={product.images[activeImage]}
+                    alt={`${product.title} — photo ${activeImage + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-muted-foreground">
+                    <Leaf className="h-10 w-10" />
+                  </div>
+                )}
+              </div>
+              {(product.images?.length ?? 0) > 1 ? (
+                <div className="grid grid-cols-5 gap-2">
+                  {product.images.map((src, index) => (
+                    <button
+                      key={src}
+                      type="button"
+                      aria-label={`Show photo ${index + 1}`}
+                      onClick={() => setActiveImage(index)}
+                      className={`aspect-square overflow-hidden rounded-xl border-2 ${
+                        index === activeImage ? "border-primary" : "border-transparent opacity-70 hover:opacity-100"
+                      }`}
+                    >
+                      <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    </button>
+                  ))}
                 </div>
-              )}
+              ) : null}
             </div>
 
             <div className="space-y-5">

@@ -53,7 +53,7 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 
     if (!raw) return { product: null, store: null };
     const { resolveProductImages } = await import("./product-images.server");
-    const [product] = await resolveProductImages(supabase, [raw]);
+    const product = (await resolveProductImages(supabase, [raw]))[0] ?? raw;
 
     const { data: store } = await supabase
       .from("sellers")
