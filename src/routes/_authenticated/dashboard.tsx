@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Loader2,
   Plus,
+  Sparkles,
   Store,
   XCircle,
 } from "lucide-react";
@@ -21,6 +22,7 @@ import {
   startSubscriptionCheckout,
   confirmSubscriptionPayment,
 } from "@/lib/seller.functions";
+import { generateProductDescription } from "@/lib/ai-description.functions";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ECO_ATTRIBUTES,
@@ -524,6 +526,8 @@ function CreateStoreForm({ onCreated }: { onCreated: () => void }) {
 
 function AddProductForm({ onSaved }: { onSaved: () => void }) {
   const save = useServerFn(saveProduct);
+  const writeWithAi = useServerFn(generateProductDescription);
+  const [aiBusy, setAiBusy] = useState(false);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     title: "",
@@ -676,12 +680,45 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
           <div className="sm:col-span-2">
             <Field label="Description">
               <textarea
-                rows={3}
+                rows={5}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 className={inputClass}
+                placeholder="Write your own, or add a few notes and let AI write it for you."
               />
             </Field>
+            <button
+              type="button"
+              disabled={aiBusy || form.title.trim().length < 2}
+              onClick={async () => {
+                setAiBusy(true);
+                setError(null);
+                try {
+                  const result = await writeWithAi({
+                    data: {
+                      title: form.title.trim(),
+                      category: form.category || undefined,
+                      brandName: form.isBranded ? form.brandName || undefined : undefined,
+                      ecoAttributes: attributes.map((a) => ECO_LABELS[a] ?? a),
+                      notes: form.description || undefined,
+                    },
+                  });
+                  if (result.text) setForm((f) => ({ ...f, description: result.text! }));
+                  else setError(result.error);
+                } catch {
+                  setError("The AI writer couldn't respond. Please try again.");
+                } finally {
+                  setAiBusy(false);
+                }
+              }}
+              className="mt-2 inline-flex items-center gap-2 rounded-full border border-primary/40 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 disabled:opacity-50"
+            >
+              {aiBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {aiBusy ? "Writing…" : "Write with AI"}
+            </button>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Uses the title, category, eco attributes and any notes above. Review before saving.
+            </p>
           </div>
 
           <div className="sm:col-span-2">
