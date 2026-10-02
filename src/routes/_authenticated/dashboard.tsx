@@ -526,6 +526,8 @@ function CreateStoreForm({ onCreated }: { onCreated: () => void }) {
   );
 }
 
+const MAX_PHOTOS = 6;
+
 function AddProductForm({ onSaved }: { onSaved: () => void }) {
   const save = useServerFn(saveProduct);
   const writeWithAi = useServerFn(generateProductDescription);
