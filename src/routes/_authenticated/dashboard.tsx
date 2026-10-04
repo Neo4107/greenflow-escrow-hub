@@ -34,6 +34,7 @@ import {
   SUBSCRIPTION_FEE_CENTS,
 } from "@/lib/eco";
 import { SiteHeader } from "@/components/site-header";
+import { SellerEarnings } from "@/components/seller-earnings";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -111,6 +112,8 @@ function DashboardPage() {
           View public store
         </Link>
       </div>
+
+      <SellerEarnings />
 
       <FeeBalanceCard
         store={store}
