@@ -91,7 +91,10 @@ export function SellerEarnings() {
             </thead>
             <tbody>
               {payouts.map((p) => {
-                const s = payoutLabels[p.status] ?? payoutLabels.escrow;
+                const s = payoutLabels[p.status] ?? {
+                  label: p.status,
+                  className: "bg-muted text-muted-foreground",
+                };
                 return (
                   <tr key={p.id} className="border-t border-border">
                     <td className="py-2 pr-3">{fmtDate(p.created_at)}</td>
