@@ -176,25 +176,44 @@ export const listMyPayouts = createServerFn({ method: "GET" })
       .select("id")
       .eq("user_id", userId)
       .maybeSingle();
-    if (!store)
-      return { payouts: [], totals: { escrow: 0, releasable: 0, paid: 0, commission: 0 } };
+    const emptyTotals = {
+      escrow: 0,
+      releasable: 0,
+      paid: 0,
+      commission: 0,
+      fees: 0,
+      gross: 0,
+      reversed: 0,
+    };
+    if (!store) return { payouts: [], sales: [], totals: emptyTotals };
 
-    const { data: payouts } = await supabase
-      .from("seller_payouts")
-      .select(
-        "id, order_id, gross_cents, commission_cents, amount_cents, escrow_release_at, status, released_at, paid_at",
-      )
-      .eq("seller_id", store.id)
-      .order("created_at", { ascending: false })
-      .limit(50);
+    const [{ data: payouts }, { data: sales }] = await Promise.all([
+      supabase
+        .from("seller_payouts")
+        .select(
+          "id, order_id, gross_cents, commission_cents, fee_deducted_cents, amount_cents, escrow_release_at, status, released_at, paid_at, created_at",
+        )
+        .eq("seller_id", store.id)
+        .order("created_at", { ascending: false })
+        .limit(200),
+      supabase
+        .from("order_items")
+        .select("id, order_id, title, quantity, subtotal_cents, created_at")
+        .eq("seller_id", store.id)
+        .order("created_at", { ascending: false })
+        .limit(50),
+    ]);
 
-    const totals = { escrow: 0, releasable: 0, paid: 0, commission: 0 };
+    const totals = { ...emptyTotals };
     for (const row of payouts ?? []) {
+      totals.gross += row.gross_cents;
       totals.commission += row.commission_cents;
+      totals.fees += row.fee_deducted_cents;
       if (row.status === "escrow") totals.escrow += row.amount_cents;
       if (row.status === "releasable") totals.releasable += row.amount_cents;
       if (row.status === "paid") totals.paid += row.amount_cents;
+      if (row.status === "reversed" || row.status === "refunded") totals.reversed += row.amount_cents;
     }
 
-    return { payouts: payouts ?? [], totals };
+    return { payouts: payouts ?? [], sales: sales ?? [], totals };
   });
