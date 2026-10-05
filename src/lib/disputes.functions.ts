@@ -268,5 +268,18 @@ export const resolveDispute = createServerFn({ method: "POST" })
       .eq("id", ticket.id);
     if (updateError) throw new Error(updateError.message);
 
-    return { ok: true, reversal };
+    // Send the money back to the shopper through Paystack.
+    let refund: Awaited<ReturnType<typeof import("./disputes.server").sendDisputeRefund>> | null =
+      null;
+    if (data.outcome === "refund" && data.refundCents > 0) {
+      const { sendDisputeRefund } = await import("./disputes.server");
+      refund = await sendDisputeRefund({
+        ticketId: ticket.id,
+        orderId: ticket.order_id,
+        refundCents: data.refundCents,
+        note: data.summary,
+      });
+    }
+
+    return { ok: true, reversal, refund };
   });

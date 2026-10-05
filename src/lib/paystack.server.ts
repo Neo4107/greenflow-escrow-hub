@@ -106,3 +106,25 @@ export async function initializeOrderCharge(params: {
 
   return { authorizationUrl: String(data["authorization_url"] ?? "") };
 }
+
+/** Sends money back to the shopper's original payment method (full or partial). */
+export async function createRefund(params: {
+  transactionReference: string;
+  amountCents: number;
+  note: string;
+}) {
+  const data = await paystackFetch("/refund", {
+    method: "POST",
+    body: JSON.stringify({
+      transaction: params.transactionReference,
+      amount: params.amountCents,
+      currency: "ZAR",
+      merchant_note: params.note.slice(0, 250),
+      customer_note: "Refund for your Rooted dispute",
+    }),
+  });
+  return {
+    refundId: String(data["id"] ?? ""),
+    status: String(data["status"] ?? "pending"),
+  };
+}

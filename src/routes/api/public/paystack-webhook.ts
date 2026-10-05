@@ -37,6 +37,26 @@ export const Route = createFileRoute("/api/public/paystack-webhook")({
           return new Response("Invalid payload", { status: 400 });
         }
 
+        // Refund events identify the original charge via transaction_reference.
+        if (event.event?.startsWith("refund.")) {
+          const d = (event.data ?? {}) as Record<string, unknown>;
+          const txRef = String(d["transaction_reference"] ?? d["reference"] ?? "");
+          if (txRef.startsWith("ord_")) {
+            try {
+              const { handleRefundWebhook } = await import("@/lib/disputes.server");
+              await handleRefundWebhook({
+                event: event.event,
+                transactionReference: txRef,
+                amountCents: Number(d["amount"] ?? 0),
+              });
+            } catch (error) {
+              console.error("paystack refund webhook handling failed", error);
+              return new Response("Webhook processing failed", { status: 500 });
+            }
+            return new Response("ok");
+          }
+        }
+
         const reference = event.data?.reference;
         if (!reference) return new Response("ok");
 
@@ -55,10 +75,7 @@ export const Route = createFileRoute("/api/public/paystack-webhook")({
               });
             } else if (event.event === "charge.failed") {
               await markOrderFailed({ reference });
-            } else if (
-              event.event === "refund.processed" ||
-              event.event === "charge.dispute.create"
-            ) {
+            } else if (event.event === "charge.dispute.create") {
               await markOrderFailed({ reference, refunded: true });
             }
           } catch (error) {
