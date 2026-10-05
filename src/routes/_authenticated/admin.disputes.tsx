@@ -309,6 +309,21 @@ function DisputeConsole() {
                       {active.refund_amount_cents > 0
                         ? ` (${formatRands(active.refund_amount_cents)} refunded)`
                         : ""}
+                      {(() => {
+                        const st = (active as { refund_gateway_status?: string })
+                          .refund_gateway_status;
+                        const label: Record<string, string> = {
+                          pending: "Refund sent to Paystack, waiting for confirmation",
+                          processed: "Refund received by the shopper",
+                          failed: "Paystack refund failed — refund manually",
+                          not_sent: "Not sent: Paystack key not set up yet",
+                        };
+                        return st && label[st] ? (
+                          <span className="mt-1 block text-xs text-muted-foreground">
+                            {label[st]}
+                          </span>
+                        ) : null;
+                      })()}
                     </p>
                   ) : (
                     <div className="flex flex-wrap gap-2 pt-1">
