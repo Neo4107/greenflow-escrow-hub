@@ -409,6 +409,9 @@ export type Database = {
           order_item_id: string
           reason: string
           refund_amount_cents: number
+          refund_gateway_reference: string | null
+          refund_gateway_status: string
+          refund_processed_at: string | null
           requested_outcome: Database["public"]["Enums"]["rma_outcome"]
           resolution_summary: string | null
           resolved_at: string | null
@@ -431,6 +434,9 @@ export type Database = {
           order_item_id: string
           reason: string
           refund_amount_cents?: number
+          refund_gateway_reference?: string | null
+          refund_gateway_status?: string
+          refund_processed_at?: string | null
           requested_outcome?: Database["public"]["Enums"]["rma_outcome"]
           resolution_summary?: string | null
           resolved_at?: string | null
@@ -453,6 +459,9 @@ export type Database = {
           order_item_id?: string
           reason?: string
           refund_amount_cents?: number
+          refund_gateway_reference?: string | null
+          refund_gateway_status?: string
+          refund_processed_at?: string | null
           requested_outcome?: Database["public"]["Enums"]["rma_outcome"]
           resolution_summary?: string | null
           resolved_at?: string | null
