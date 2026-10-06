@@ -252,7 +252,13 @@ export const updateFulfilment = createServerFn({ method: "POST" })
       throw new Error("Orders must go packed, then dispatched, then delivered.");
     }
     const now = new Date().toISOString();
-    const patch: Record<string, string> = { fulfilment_status: data.status };
+    const patch: {
+      fulfilment_status: typeof data.status;
+      packed_at?: string;
+      dispatched_at?: string;
+      delivered_at?: string;
+      courier_waybill?: string;
+    } = { fulfilment_status: data.status };
     if (data.status === "packed") patch.packed_at = now;
     if (data.status === "dispatched") {
       if (!data.waybill) throw new Error("Enter The Courier Guy waybill number.");

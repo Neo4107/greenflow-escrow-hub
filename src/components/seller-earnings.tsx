@@ -165,7 +165,7 @@ function FulfilmentControl({ sale }: { sale: Sale }) {
     setBusy(true);
     try {
       await update({ data: { orderItemId: sale.id, status, waybill: waybill || undefined } });
-      toast.success(`Marked as ${FULFILMENT_LABELS[status].toLowerCase()}`);
+      toast.success(`Marked as ${(FULFILMENT_LABELS[status] ?? status).toLowerCase()}`);
       void queryClient.invalidateQueries({ queryKey: ["my-payouts"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not update");
