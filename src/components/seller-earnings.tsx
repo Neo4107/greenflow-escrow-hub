@@ -1,8 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { FULFILMENT_LABELS, courierTrackingUrl } from "@/lib/fulfilment";
 import { useServerFn } from "@tanstack/react-start";
 import { Banknote, Clock, Lock, Receipt, Wallet } from "lucide-react";
 
-import { listMyPayouts } from "@/lib/orders.functions";
+import { listMyPayouts, updateFulfilment } from "@/lib/orders.functions";
 import { formatRands } from "@/lib/eco";
 
 const payoutLabels: Record<string, { label: string; className: string }> = {
@@ -123,17 +128,72 @@ export function SellerEarnings() {
           <h3 className="mt-6 font-medium">Recent items sold</h3>
           <ul className="mt-2 divide-y divide-border text-sm">
             {sales.map((s) => (
-              <li key={s.id} className="flex justify-between py-2">
+              <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                 <span>
                   {s.title} × {s.quantity}
                   <span className="ml-2 text-xs text-muted-foreground">{fmtDate(s.created_at)}</span>
+                  <span className="ml-2">{formatRands(s.subtotal_cents)}</span>
                 </span>
-                <span>{formatRands(s.subtotal_cents)}</span>
+                <FulfilmentControl sale={s} />
               </li>
             ))}
           </ul>
         </>
       )}
     </section>
+  );
+}
+
+type Sale = {
+  id: string;
+  fulfilment_status: string;
+  courier_waybill: string | null;
+  orders: { status: string } | null;
+};
+
+function FulfilmentControl({ sale }: { sale: Sale }) {
+  const update = useServerFn(updateFulfilment);
+  const queryClient = useQueryClient();
+  const [waybill, setWaybill] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  if (sale.orders?.status !== "paid") {
+    return <span className="text-xs text-muted-foreground">Not paid yet</span>;
+  }
+
+  async function go(status: "packed" | "dispatched" | "delivered") {
+    setBusy(true);
+    try {
+      await update({ data: { orderItemId: sale.id, status, waybill: waybill || undefined } });
+      toast.success(`Marked as ${FULFILMENT_LABELS[status].toLowerCase()}`);
+      void queryClient.invalidateQueries({ queryKey: ["my-payouts"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not update");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-xs text-muted-foreground">{FULFILMENT_LABELS[sale.fulfilment_status]}</span>
+      {sale.courier_waybill ? (
+        <a className="text-xs text-primary underline" href={courierTrackingUrl(sale.courier_waybill)} target="_blank" rel="noreferrer">
+          Waybill {sale.courier_waybill}
+        </a>
+      ) : null}
+      {sale.fulfilment_status === "awaiting_packing" && (
+        <Button size="sm" variant="outline" disabled={busy} onClick={() => void go("packed")}>Mark packed</Button>
+      )}
+      {sale.fulfilment_status === "packed" && (
+        <>
+          <Input className="h-8 w-40" placeholder="Courier Guy waybill" value={waybill} onChange={(e) => setWaybill(e.target.value)} />
+          <Button size="sm" variant="outline" disabled={busy || !waybill.trim()} onClick={() => void go("dispatched")}>Dispatch</Button>
+        </>
+      )}
+      {sale.fulfilment_status === "dispatched" && (
+        <Button size="sm" variant="outline" disabled={busy} onClick={() => void go("delivered")}>Mark delivered</Button>
+      )}
+    </div>
   );
 }

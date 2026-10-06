@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { listMyOrders, listMyPayouts } from "@/lib/orders.functions";
 import { openReturnRequest, listMyReturnRequests } from "@/lib/disputes.functions";
+import { FULFILMENT_LABELS, courierTrackingUrl } from "@/lib/fulfilment";
 import { COMMISSION_RATE, ESCROW_DAYS, formatRands } from "@/lib/eco";
 
 export const Route = createFileRoute("/_authenticated/orders")({
@@ -121,6 +122,25 @@ function OrdersPage() {
                         .map((item) => `${item.quantity} × ${item.title}`)
                         .join(", ") || order.gateway_reference}
                     </p>
+                    {order.status === "paid"
+                      ? (orders.data!.items ?? [])
+                          .filter((item) => item.order_id === order.id)
+                          .map((item) => (
+                            <p key={item.id} className="mt-1 text-sm">
+                              <span className="font-medium text-primary">
+                                {FULFILMENT_LABELS[item.fulfilment_status]}
+                              </span>
+                              {item.courier_waybill ? (
+                                <>
+                                  {" · "}
+                                  <a className="underline" href={courierTrackingUrl(item.courier_waybill)} target="_blank" rel="noreferrer">
+                                    Track waybill {item.courier_waybill}
+                                  </a>
+                                </>
+                              ) : null}
+                            </p>
+                          ))
+                      : null}
                     <p className="text-sm text-muted-foreground">
                       {new Date(order.created_at).toLocaleDateString("en-ZA")} ·{" "}
                       {formatRands(order.subtotal_cents)}
