@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ProductReviews } from "@/components/product-reviews";
 import { getProductBySlug } from "@/lib/marketplace.functions";
 import { startOrderCheckout, confirmOrderPayment } from "@/lib/orders.functions";
 import {
@@ -217,6 +218,7 @@ function ProductPage() {
             </div>
           </div>
         )}
+        {product ? <ProductReviews productId={product.id} /> : null}
       </main>
     </div>
   );
