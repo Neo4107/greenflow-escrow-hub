@@ -121,9 +121,15 @@ export type Database = {
       order_items: {
         Row: {
           commission_cents: number
+          courier_name: string
+          courier_waybill: string | null
           created_at: string
+          delivered_at: string | null
+          dispatched_at: string | null
+          fulfilment_status: Database["public"]["Enums"]["fulfilment_status"]
           id: string
           order_id: string
+          packed_at: string | null
           payout_cents: number
           product_id: string
           quantity: number
@@ -134,9 +140,15 @@ export type Database = {
         }
         Insert: {
           commission_cents: number
+          courier_name?: string
+          courier_waybill?: string | null
           created_at?: string
+          delivered_at?: string | null
+          dispatched_at?: string | null
+          fulfilment_status?: Database["public"]["Enums"]["fulfilment_status"]
           id?: string
           order_id: string
+          packed_at?: string | null
           payout_cents: number
           product_id: string
           quantity: number
@@ -147,9 +159,15 @@ export type Database = {
         }
         Update: {
           commission_cents?: number
+          courier_name?: string
+          courier_waybill?: string | null
           created_at?: string
+          delivered_at?: string | null
+          dispatched_at?: string | null
+          fulfilment_status?: Database["public"]["Enums"]["fulfilment_status"]
           id?: string
           order_id?: string
+          packed_at?: string | null
           payout_cents?: number
           product_id?: string
           quantity?: number
@@ -738,6 +756,11 @@ export type Database = {
         | "sales_deduction"
         | "out_of_pocket_payment"
         | "write_off"
+      fulfilment_status:
+        | "awaiting_packing"
+        | "packed"
+        | "dispatched"
+        | "delivered"
       order_status: "pending" | "paid" | "failed" | "cancelled" | "refunded"
       payout_status:
         | "escrow"
@@ -893,6 +916,12 @@ export const Constants = {
         "sales_deduction",
         "out_of_pocket_payment",
         "write_off",
+      ],
+      fulfilment_status: [
+        "awaiting_packing",
+        "packed",
+        "dispatched",
+        "delivered",
       ],
       order_status: ["pending", "paid", "failed", "cancelled", "refunded"],
       payout_status: [
