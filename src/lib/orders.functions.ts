@@ -158,7 +158,7 @@ export const listMyOrders = createServerFn({ method: "GET" })
     const { data: items } = orderIds.length
       ? await supabase
           .from("order_items")
-          .select("id, order_id, title, quantity, subtotal_cents")
+          .select("id, order_id, title, quantity, subtotal_cents, fulfilment_status, courier_name, courier_waybill, packed_at, dispatched_at, delivered_at")
           .in("order_id", orderIds)
       : { data: [] };
 
@@ -198,7 +198,7 @@ export const listMyPayouts = createServerFn({ method: "GET" })
         .limit(200),
       supabase
         .from("order_items")
-        .select("id, order_id, title, quantity, subtotal_cents, created_at")
+        .select("id, order_id, title, quantity, subtotal_cents, created_at, fulfilment_status, courier_waybill, orders(status)")
         .eq("seller_id", store.id)
         .order("created_at", { ascending: false })
         .limit(50),
@@ -216,4 +216,52 @@ export const listMyPayouts = createServerFn({ method: "GET" })
     }
 
     return { payouts: payouts ?? [], sales: sales ?? [], totals };
+  });
+
+const fulfilmentSchema = z.object({
+  orderItemId: z.string().uuid(),
+  status: z.enum(["packed", "dispatched", "delivered"]),
+  waybill: z.string().trim().max(60).optional(),
+});
+
+/** Seller moves an item through packed → dispatched (The Courier Guy waybill) → delivered. */
+export const updateFulfilment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => fulfilmentSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: store } = await supabase
+      .from("sellers")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!store) throw new Error("No store found.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: item } = await supabaseAdmin
+      .from("order_items")
+      .select("id, seller_id, fulfilment_status, orders(status)")
+      .eq("id", data.orderItemId)
+      .maybeSingle();
+    if (!item || item.seller_id !== store.id) throw new Error("Order item not found.");
+    const orderStatus = (item.orders as { status: string } | null)?.status;
+    if (orderStatus !== "paid") throw new Error("Only paid orders can be fulfilled.");
+
+    const order = ["awaiting_packing", "packed", "dispatched", "delivered"];
+    if (order.indexOf(data.status) !== order.indexOf(item.fulfilment_status) + 1) {
+      throw new Error("Orders must go packed, then dispatched, then delivered.");
+    }
+    const now = new Date().toISOString();
+    const patch: Record<string, string> = { fulfilment_status: data.status };
+    if (data.status === "packed") patch.packed_at = now;
+    if (data.status === "dispatched") {
+      if (!data.waybill) throw new Error("Enter The Courier Guy waybill number.");
+      patch.dispatched_at = now;
+      patch.courier_waybill = data.waybill;
+    }
+    if (data.status === "delivered") patch.delivered_at = now;
+
+    const { error } = await supabaseAdmin.from("order_items").update(patch).eq("id", item.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
