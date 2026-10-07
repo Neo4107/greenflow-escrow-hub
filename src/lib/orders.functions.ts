@@ -80,8 +80,6 @@ export const startOrderCheckout = createServerFn({ method: "POST" })
           unitPriceCents: product.price_cents,
           quantity: data.quantity,
           subtotalCents: subtotal,
-        deliveryCents,
-        totalCents,
           commissionCents,
           payoutCents,
         },
