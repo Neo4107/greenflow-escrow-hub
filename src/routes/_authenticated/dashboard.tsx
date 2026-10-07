@@ -542,6 +542,10 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
     category: "",
     priceRands: "",
     stock: "0",
+    weightKg: "",
+    lengthCm: "",
+    widthCm: "",
+    heightCm: "",
     imageUrl: "",
     isBranded: false,
     brandName: "",
@@ -598,6 +602,10 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
           category: form.category || undefined,
           priceRands: Number(form.priceRands),
           stock: Number(form.stock),
+          weightKg: Number(form.weightKg),
+          lengthCm: Number(form.lengthCm),
+          widthCm: Number(form.widthCm),
+          heightCm: Number(form.heightCm),
           imagePaths,
           ecoAttributes: attributes,
           isBranded: form.isBranded,
@@ -619,6 +627,10 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
         category: "",
         priceRands: "",
         stock: "0",
+        weightKg: "",
+        lengthCm: "",
+        widthCm: "",
+        heightCm: "",
         imageUrl: "",
         isBranded: false,
         brandName: "",
@@ -696,6 +708,53 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
               className={inputClass}
             />
           </Field>
+          <Field label="Packed weight (kg)" required>
+            <input
+              required
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={form.weightKg}
+              onChange={(e) => setForm({ ...form, weightKg: e.target.value })}
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Packed length (cm)" required>
+            <input
+              required
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={form.lengthCm}
+              onChange={(e) => setForm({ ...form, lengthCm: e.target.value })}
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Packed width (cm)" required>
+            <input
+              required
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={form.widthCm}
+              onChange={(e) => setForm({ ...form, widthCm: e.target.value })}
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Packed height (cm)" required>
+            <input
+              required
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={form.heightCm}
+              onChange={(e) => setForm({ ...form, heightCm: e.target.value })}
+              className={inputClass}
+            />
+          </Field>
+          <p className="text-xs text-muted-foreground sm:col-span-2">
+            Measure the item in its packaging. Shoppers pay delivery based on these.
+          </p>
           <div className="sm:col-span-2">
             <p className="text-sm font-medium">Product photos</p>
             <p className="text-xs text-muted-foreground">

@@ -74,3 +74,24 @@ export function commissionBreakdown(subtotalCents: number) {
     payoutCents: subtotalCents - commission,
   };
 }
+
+/** Courier volumetric divisor: L×W×H (cm) / 5000 = volumetric kg. */
+export const VOLUMETRIC_DIVISOR = 5000;
+/** Delivery base fee covering the first DELIVERY_BASE_KG of chargeable weight. */
+export const DELIVERY_BASE_CENTS = 9900;
+export const DELIVERY_BASE_KG = 2;
+/** Charged for each extra kg (or part of a kg) above the base. */
+export const DELIVERY_PER_KG_CENTS = 1500;
+
+export type ParcelSize = { weightKg: number; lengthCm: number; widthCm: number; heightCm: number };
+
+/** Delivery fee: the bigger of real weight and volumetric weight decides the price. */
+export function deliveryFee(item: ParcelSize, quantity = 1) {
+  const volumetricKg = (item.lengthCm * item.widthCm * item.heightCm) / VOLUMETRIC_DIVISOR;
+  const chargeableKg = Math.max(item.weightKg, volumetricKg) * quantity;
+  const extraKg = Math.max(0, Math.ceil(chargeableKg - DELIVERY_BASE_KG - 1e-9));
+  return {
+    chargeableKg: Math.round(chargeableKg * 100) / 100,
+    deliveryCents: DELIVERY_BASE_CENTS + extraKg * DELIVERY_PER_KG_CENTS,
+  };
+}
