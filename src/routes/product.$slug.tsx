@@ -16,6 +16,7 @@ import {
   ECO_LABELS,
   ESCROW_DAYS,
   commissionBreakdown,
+  deliveryFee,
   formatRands,
 } from "@/lib/eco";
 
@@ -78,6 +79,21 @@ function ProductPage() {
   const product = data?.product ?? null;
   const store = data?.store ?? null;
   const split = product ? commissionBreakdown(product.price_cents * quantity) : null;
+  const hasSize = Boolean(
+    product?.weight_kg && product?.length_cm && product?.width_cm && product?.height_cm,
+  );
+  const delivery =
+    product && hasSize
+      ? deliveryFee(
+          {
+            weightKg: Number(product.weight_kg),
+            lengthCm: Number(product.length_cm),
+            widthCm: Number(product.width_cm),
+            heightCm: Number(product.height_cm),
+          },
+          quantity,
+        )
+      : null;
 
   async function buyNow() {
     setBusy(true);
@@ -191,11 +207,27 @@ function ProductPage() {
                 <span className="text-sm text-muted-foreground">{product.stock} in stock</span>
               </div>
 
-              <Button onClick={buyNow} disabled={busy || product.stock < 1} size="lg">
+              <div className="rounded-2xl border border-border bg-card p-4 text-sm">
+                <div className="flex justify-between"><span>Items</span><span>{formatRands(product.price_cents * quantity)}</span></div>
+                <div className="flex justify-between">
+                  <span>Delivery (The Courier Guy)</span>
+                  <span>{delivery ? formatRands(delivery.deliveryCents) : "Not available"}</span>
+                </div>
+                {delivery ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Charged on {delivery.chargeableKg} kg — the bigger of the parcel's real weight and its size.
+                    Parcel: {Number(product.length_cm)} × {Number(product.width_cm)} × {Number(product.height_cm)} cm, {Number(product.weight_kg)} kg each.
+                  </p>
+                ) : null}
+              </div>
+
+              <Button onClick={buyNow} disabled={busy || product.stock < 1 || !delivery} size="lg">
                 {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {product.stock < 1
                   ? "Sold out"
-                  : `Pay ${formatRands(product.price_cents * quantity)}`}
+                  : !delivery
+                    ? "Delivery size missing"
+                    : `Pay ${formatRands(product.price_cents * quantity + delivery.deliveryCents)}`}
               </Button>
 
               {split ? (

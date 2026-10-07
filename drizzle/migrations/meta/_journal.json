@@ -43,6 +43,13 @@
       "when": 1791323349943,
       "tag": "0005_product_reviews",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791358872966,
+      "tag": "0006_product_dimensions_delivery_fee",
+      "breakpoints": true
     }
   ]
 }

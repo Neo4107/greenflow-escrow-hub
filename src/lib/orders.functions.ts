@@ -19,7 +19,7 @@ export const startOrderCheckout = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => checkoutSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId, claims } = context;
-    const { commissionBreakdown, COMMISSION_RATE } = await import("./eco");
+    const { commissionBreakdown, COMMISSION_RATE, deliveryFee } = await import("./eco");
     const { paystackKey, initializeOrderCharge } = await import("./paystack.server");
     const { createPublicSupabase } = await import("./public-supabase.server");
 
@@ -27,7 +27,7 @@ export const startOrderCheckout = createServerFn({ method: "POST" })
     const publicDb = createPublicSupabase();
     const { data: product } = await publicDb
       .from("products")
-      .select("id, title, price_cents, stock, seller_id")
+      .select("id, title, price_cents, stock, seller_id, weight_kg, length_cm, width_cm, height_cm")
       .eq("slug", data.productSlug)
       .maybeSingle();
     if (!product) throw new Error("This product is not available for purchase.");
@@ -35,6 +35,19 @@ export const startOrderCheckout = createServerFn({ method: "POST" })
 
     const subtotal = product.price_cents * data.quantity;
     const { commissionCents, payoutCents } = commissionBreakdown(subtotal);
+    if (!product.weight_kg || !product.length_cm || !product.width_cm || !product.height_cm) {
+      throw new Error("This listing is missing its parcel size, so delivery can't be priced yet.");
+    }
+    const { deliveryCents } = deliveryFee(
+      {
+        weightKg: Number(product.weight_kg),
+        lengthCm: Number(product.length_cm),
+        widthCm: Number(product.width_cm),
+        heightCm: Number(product.height_cm),
+      },
+      data.quantity,
+    );
+    const totalCents = subtotal + deliveryCents;
 
     const email = (claims as { email?: string }).email ?? "";
     const reference = `ord_${product.id.slice(0, 8)}_${Date.now()}`;
@@ -47,6 +60,7 @@ export const startOrderCheckout = createServerFn({ method: "POST" })
         subtotal_cents: subtotal,
         commission_cents: commissionCents,
         payout_cents: payoutCents,
+        delivery_cents: deliveryCents,
         commission_rate: COMMISSION_RATE * 100,
         status: "pending",
         gateway_reference: reference,
@@ -78,6 +92,8 @@ export const startOrderCheckout = createServerFn({ method: "POST" })
         authorizationUrl: null as string | null,
         reference,
         subtotalCents: subtotal,
+        deliveryCents,
+        totalCents,
         commissionCents,
         payoutCents,
       };
@@ -85,7 +101,7 @@ export const startOrderCheckout = createServerFn({ method: "POST" })
 
     const { authorizationUrl } = await initializeOrderCharge({
       email,
-      amountCents: subtotal,
+      amountCents: totalCents,
       reference,
       callbackUrl: (await import("./safe-redirect.server")).assertSameOriginReturnUrl(
         data.returnUrl,
