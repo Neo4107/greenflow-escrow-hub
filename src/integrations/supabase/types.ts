@@ -208,6 +208,7 @@ export type Database = {
           commission_rate: number
           created_at: string
           currency: string
+          delivery_cents: number
           gateway: string
           gateway_reference: string
           id: string
@@ -224,6 +225,7 @@ export type Database = {
           commission_rate?: number
           created_at?: string
           currency?: string
+          delivery_cents?: number
           gateway?: string
           gateway_reference: string
           id?: string
@@ -240,6 +242,7 @@ export type Database = {
           commission_rate?: number
           created_at?: string
           currency?: string
+          delivery_cents?: number
           gateway?: string
           gateway_reference?: string
           id?: string
@@ -371,9 +374,11 @@ export type Database = {
           created_at: string
           description: string | null
           eco_attributes: string[]
+          height_cm: number | null
           id: string
           images: string[]
           is_branded: boolean
+          length_cm: number | null
           price_cents: number
           seller_id: string
           slug: string
@@ -381,6 +386,8 @@ export type Database = {
           stock: number
           title: string
           updated_at: string
+          weight_kg: number | null
+          width_cm: number | null
         }
         Insert: {
           admin_notes?: string | null
@@ -389,9 +396,11 @@ export type Database = {
           created_at?: string
           description?: string | null
           eco_attributes?: string[]
+          height_cm?: number | null
           id?: string
           images?: string[]
           is_branded?: boolean
+          length_cm?: number | null
           price_cents: number
           seller_id: string
           slug: string
@@ -399,6 +408,8 @@ export type Database = {
           stock?: number
           title: string
           updated_at?: string
+          weight_kg?: number | null
+          width_cm?: number | null
         }
         Update: {
           admin_notes?: string | null
@@ -407,9 +418,11 @@ export type Database = {
           created_at?: string
           description?: string | null
           eco_attributes?: string[]
+          height_cm?: number | null
           id?: string
           images?: string[]
           is_branded?: boolean
+          length_cm?: number | null
           price_cents?: number
           seller_id?: string
           slug?: string
@@ -417,6 +430,8 @@ export type Database = {
           stock?: number
           title?: string
           updated_at?: string
+          weight_kg?: number | null
+          width_cm?: number | null
         }
         Relationships: [
           {
