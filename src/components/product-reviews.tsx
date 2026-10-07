@@ -61,7 +61,10 @@ export function ProductReviews({ productId }: { productId: string }) {
   const average = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
 
   async function submit() {
-    if (!userId || rating < 1) return toast.error("Pick a star rating first.");
+    if (!userId || rating < 1) {
+      toast.error("Pick a star rating first.");
+      return;
+    }
     setBusy(true);
     const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle();
     const name = profile?.full_name?.trim().split(/\s+/)[0] || "Verified buyer";
