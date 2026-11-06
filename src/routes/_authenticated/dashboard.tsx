@@ -558,8 +558,17 @@ function CreateStoreForm({ onCreated }: { onCreated: () => void }) {
 
 const MAX_PHOTOS = 6;
 
-function AddProductForm({ onSaved }: { onSaved: () => void }) {
+function ProductForm({
+  product,
+  onSaved,
+  onCancelEdit,
+}: {
+  product?: Account["products"][number] | null;
+  onSaved: () => void;
+  onCancelEdit: () => void;
+}) {
   const save = useServerFn(saveProduct);
+  const update = useServerFn(updateProduct);
   const writeWithAi = useServerFn(generateProductDescription);
   const [aiBusy, setAiBusy] = useState(false);
   const [open, setOpen] = useState(false);
@@ -587,6 +596,55 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
     setPreviews(urls);
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [photos]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [existingUrls, setExistingUrls] = useState<string[]>([]);
+
+  // Editing a saved listing: prefill the form and sign its stored photos so
+  // they display; removals keep the original storage paths in sync.
+  useEffect(() => {
+    if (!product) {
+      setExistingImages([]);
+      setExistingUrls([]);
+      return;
+    }
+    setForm({
+      title: product.title,
+      description: product.description ?? "",
+      category: product.category ?? "",
+      priceRands: (product.price_cents / 100).toFixed(2),
+      stock: String(product.stock),
+      weightKg: product.weight_kg != null ? String(product.weight_kg) : "",
+      lengthCm: product.length_cm != null ? String(product.length_cm) : "",
+      widthCm: product.width_cm != null ? String(product.width_cm) : "",
+      heightCm: product.height_cm != null ? String(product.height_cm) : "",
+      imageUrl: "",
+      isBranded: product.is_branded,
+      brandName: product.brand_name ?? "",
+      certificateExpiryDate: "",
+    });
+    setAttributes(product.eco_attributes);
+    setCertificateFile(null);
+    const images = product.images ?? [];
+    setExistingImages(images);
+    const legacy = images.filter((p) => /^https?:\/\//.test(p));
+    const paths = images.filter((p) => !/^https?:\/\//.test(p));
+    if (paths.length === 0) {
+      setExistingUrls(legacy);
+      return;
+    }
+    let cancelled = false;
+    void supabase.storage
+      .from("product-images")
+      .createSignedUrls(paths, 60 * 60 * 24)
+      .then(({ data }) => {
+        if (cancelled) return;
+        const signed = new Map((data ?? []).map((row) => [row.path, row.signedUrl ?? ""]));
+        setExistingUrls(images.map((p) => (/^https?:\/\//.test(p) ? p : signed.get(p) ?? "")));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [product]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
