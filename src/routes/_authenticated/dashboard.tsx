@@ -10,6 +10,7 @@ import {
   ExternalLink,
   ImagePlus,
   Loader2,
+  Pencil,
   X,
   Plus,
   Sparkles,
@@ -21,6 +22,7 @@ import {
   getMyAccount,
   createStore,
   saveProduct,
+  updateProduct,
   startSubscriptionCheckout,
   confirmSubscriptionPayment,
 } from "@/lib/seller.functions";
@@ -94,6 +96,8 @@ function DashboardPage() {
     );
   }
 
+  const [editing, setEditing] = useState<Account["products"][number] | null>(null);
+
   const { store, products, payments, certificates, ledger } = data;
 
   return (
@@ -123,10 +127,21 @@ function DashboardPage() {
         showNinetyDayNotice={data.showNinetyDayNotice}
       />
 
-      <ProductsCard products={products} certificates={certificates} />
+      <ProductsCard
+        products={products}
+        certificates={certificates}
+        onEdit={(product) => setEditing(product)}
+      />
 
       {store.approval_status === "approved" ? (
-        <AddProductForm onSaved={() => queryClient.invalidateQueries({ queryKey: ["my-account"] })} />
+        <ProductForm
+          product={editing}
+          onSaved={() => {
+            setEditing(null);
+            queryClient.invalidateQueries({ queryKey: ["my-account"] });
+          }}
+          onCancelEdit={() => setEditing(null)}
+        />
       ) : (
         <div className="rounded-lg border border-border bg-muted p-6">
           <h2 className="font-serif text-xl font-semibold">
@@ -355,9 +370,11 @@ function FeeBalanceCard({
 function ProductsCard({
   products,
   certificates,
+  onEdit,
 }: {
   products: Account["products"];
   certificates: Account["certificates"];
+  onEdit: (product: Account["products"][number]) => void;
 }) {
   return (
     <section className="rounded-2xl border border-border bg-card p-6">
@@ -405,12 +422,22 @@ function ProductsCard({
                     </p>
                   )}
                 </div>
-                <span
-                  className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${style.className}`}
-                >
-                  <StatusIcon className="h-3.5 w-3.5" />
-                  {style.label}
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(product)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    Edit
+                  </button>
+                  <span
+                    className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${style.className}`}
+                  >
+                    <StatusIcon className="h-3.5 w-3.5" />
+                    {style.label}
+                  </span>
+                </div>
               </li>
             );
           })}
@@ -531,8 +558,17 @@ function CreateStoreForm({ onCreated }: { onCreated: () => void }) {
 
 const MAX_PHOTOS = 6;
 
-function AddProductForm({ onSaved }: { onSaved: () => void }) {
+function ProductForm({
+  product,
+  onSaved,
+  onCancelEdit,
+}: {
+  product?: Account["products"][number] | null;
+  onSaved: () => void;
+  onCancelEdit: () => void;
+}) {
   const save = useServerFn(saveProduct);
+  const update = useServerFn(updateProduct);
   const writeWithAi = useServerFn(generateProductDescription);
   const [aiBusy, setAiBusy] = useState(false);
   const [open, setOpen] = useState(false);
@@ -560,13 +596,62 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
     setPreviews(urls);
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [photos]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [existingUrls, setExistingUrls] = useState<string[]>([]);
+
+  // Editing a saved listing: prefill the form and sign its stored photos so
+  // they display; removals keep the original storage paths in sync.
+  useEffect(() => {
+    if (!product) {
+      setExistingImages([]);
+      setExistingUrls([]);
+      return;
+    }
+    setForm({
+      title: product.title,
+      description: product.description ?? "",
+      category: product.category ?? "",
+      priceRands: (product.price_cents / 100).toFixed(2),
+      stock: String(product.stock),
+      weightKg: product.weight_kg != null ? String(product.weight_kg) : "",
+      lengthCm: product.length_cm != null ? String(product.length_cm) : "",
+      widthCm: product.width_cm != null ? String(product.width_cm) : "",
+      heightCm: product.height_cm != null ? String(product.height_cm) : "",
+      imageUrl: "",
+      isBranded: product.is_branded,
+      brandName: product.brand_name ?? "",
+      certificateExpiryDate: "",
+    });
+    setAttributes(product.eco_attributes);
+    setCertificateFile(null);
+    const images = product.images ?? [];
+    setExistingImages(images);
+    const legacy = images.filter((p) => /^https?:\/\//.test(p));
+    const paths = images.filter((p) => !/^https?:\/\//.test(p));
+    if (paths.length === 0) {
+      setExistingUrls(legacy);
+      return;
+    }
+    let cancelled = false;
+    void supabase.storage
+      .from("product-images")
+      .createSignedUrls(paths, 60 * 60 * 24)
+      .then(({ data }) => {
+        if (cancelled) return;
+        const signed = new Map((data ?? []).map((row) => [row.path, row.signedUrl ?? ""]));
+        setExistingUrls(images.map((p) => (/^https?:\/\//.test(p) ? p : signed.get(p) ?? "")));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [product]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: async () => {
       let certificateDocumentPath: string | undefined;
-      if (form.isBranded) {
+      if (!product && form.isBranded) {
         if (!certificateFile) {
           throw new Error(
             "Branded listings require a Certificate of Authorization / Letter of Authority.",
@@ -581,7 +666,7 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
         certificateDocumentPath = path;
       }
 
-      const imagePaths: string[] = [];
+      const imagePaths: string[] = [...existingImages];
       if (photos.length > 0) {
         const { data: user } = await supabase.auth.getUser();
         for (const file of photos) {
@@ -593,6 +678,25 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
           if (uploadError) throw new Error(`Photo upload failed: ${uploadError.message}`);
           imagePaths.push(path);
         }
+      }
+
+      if (product) {
+        return update({
+          data: {
+            productId: product.id,
+            title: form.title,
+            description: form.description || undefined,
+            category: form.category || undefined,
+            priceRands: Number(form.priceRands),
+            stock: Number(form.stock),
+            weightKg: Number(form.weightKg),
+            lengthCm: Number(form.lengthCm),
+            widthCm: Number(form.widthCm),
+            heightCm: Number(form.heightCm),
+            imagePaths,
+            ecoAttributes: attributes,
+          },
+        });
       }
 
       return save({
@@ -616,11 +720,13 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
       });
     },
     onSuccess: (result) => {
-      setSuccess(
-        result.status === "approved"
-          ? "Listed and live on the marketplace."
-          : "Submitted for admin review — branded listings need certificate approval first.",
-      );
+      if ("status" in result) {
+        setSuccess(
+          result.status === "approved"
+            ? "Listed and live on the marketplace."
+            : "Submitted for admin review — branded listings need certificate approval first.",
+        );
+      }
       setForm({
         title: "",
         description: "",
@@ -639,6 +745,8 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
       setAttributes([]);
       setCertificateFile(null);
       setPhotos([]);
+      setExistingImages([]);
+      setExistingUrls([]);
       onSaved();
     },
     onError: (e) => setError(e instanceof Error ? e.message : "Could not save the product."),
@@ -647,17 +755,22 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
   return (
     <section className="rounded-2xl border border-border bg-card p-6">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="font-serif text-xl font-semibold">Add a product</h2>
+        <h2 className="font-serif text-xl font-semibold">
+          {product ? `Edit listing: ${product.title}` : "Add a product"}
+        </h2>
         <button
-          onClick={() => setOpen(!open)}
+          onClick={() => {
+            if (product) onCancelEdit();
+            else setOpen(!open);
+          }}
           className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
         >
           <Plus className="h-4 w-4" />
-          {open ? "Close" : "New listing"}
+          {product ? "Cancel" : open ? "Close" : "New listing"}
         </button>
       </div>
 
-      {open && (
+      {(open || Boolean(product)) && (
         <form
           className="mt-6 grid gap-4 sm:grid-cols-2"
           onSubmit={(e) => {
@@ -761,6 +874,37 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
               Up to {MAX_PHOTOS} photos, 8 MB each. The first photo is the cover.
             </p>
             <div className="mt-2 grid grid-cols-3 gap-3 sm:grid-cols-6">
+              {existingImages.map((path, index) => {
+                const src = existingUrls[index];
+                if (!src) return null;
+                return (
+                  <div
+                    key={path}
+                    className="relative aspect-square overflow-hidden rounded-xl border border-border bg-muted"
+                  >
+                    <img
+                      src={src}
+                      alt={`Photo ${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                    {index === 0 ? (
+                      <span className="absolute left-1 top-1 rounded-full bg-primary px-2 py-0.5 text-[10px] text-primary-foreground">
+                        Cover
+                      </span>
+                    ) : null}
+                    <button
+                      type="button"
+                      aria-label={`Remove saved photo ${index + 1}`}
+                      onClick={() =>
+                        setExistingImages(existingImages.filter((p) => p !== path))
+                      }
+                      className="absolute right-1 top-1 rounded-full bg-background/90 p-1 hover:bg-background"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                );
+              })}
               {photos.map((file, index) => (
                 <div
                   key={`${file.name}-${index}`}
@@ -786,7 +930,7 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
                   </button>
                 </div>
               ))}
-              {photos.length < MAX_PHOTOS ? (
+              {photos.length + existingImages.length < MAX_PHOTOS ? (
                 <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border text-xs text-muted-foreground hover:bg-accent">
                   <ImagePlus className="h-5 w-5" />
                   Add photo
@@ -799,7 +943,9 @@ function AddProductForm({ onSaved }: { onSaved: () => void }) {
                       const picked = Array.from(e.target.files ?? []).filter(
                         (f) => f.size <= 8 * 1024 * 1024,
                       );
-                      setPhotos([...photos, ...picked].slice(0, MAX_PHOTOS));
+                      setPhotos(
+                        [...photos, ...picked].slice(0, MAX_PHOTOS - existingImages.length),
+                      );
                       e.target.value = "";
                     }}
                   />

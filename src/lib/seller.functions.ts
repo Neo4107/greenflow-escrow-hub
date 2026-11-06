@@ -228,6 +228,74 @@ export const saveProduct = createServerFn({ method: "POST" })
     return { productId: product.id, status: product.status };
   });
 
+const updateProductSchema = z.object({
+  productId: z.string().uuid(),
+  title: z.string().min(2).max(120),
+  description: z.string().max(4000).optional(),
+  category: z.string().max(60).optional(),
+  priceRands: z.number().positive().max(1000000),
+  stock: z.number().int().min(0).max(100000),
+  weightKg: z.number().positive().max(500),
+  lengthCm: z.number().positive().max(300),
+  widthCm: z.number().positive().max(300),
+  heightCm: z.number().positive().max(300),
+  imagePaths: z.array(z.string().min(3).max(300)).max(6),
+  ecoAttributes: z.array(z.string()).min(1),
+});
+
+/**
+ * Sellers edit a saved listing — weight, parcel size, photos, price, stock —
+ * without listing the item again. Brand/certificate fields are untouched so an
+ * approved branded listing never skips admin review.
+ */
+export const updateProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => updateProductSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: store } = await supabase
+      .from("sellers")
+      .select("id, approval_status")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!store) throw new Error("Create your store before editing products.");
+    if (store.approval_status !== "approved")
+      throw new Error("Your store must be approved by an admin before you can edit listings.");
+
+    // Read through RLS: the seller-updates-own-products policy enforces ownership.
+    const { data: product } = await supabase
+      .from("products")
+      .select("id")
+      .eq("id", data.productId)
+      .eq("seller_id", store.id)
+      .maybeSingle();
+    if (!product) throw new Error("Listing not found.");
+
+    const images = data.imagePaths.filter(
+      (path) => path.startsWith(`${userId}/`) || /^https?:\/\//.test(path),
+    );
+
+    const { error } = await supabase
+      .from("products")
+      .update({
+        title: data.title,
+        description: data.description ?? null,
+        category: data.category ?? null,
+        price_cents: Math.round(data.priceRands * 100),
+        stock: data.stock,
+        weight_kg: data.weightKg,
+        length_cm: data.lengthCm,
+        width_cm: data.widthCm,
+        height_cm: data.heightCm,
+        images,
+        eco_attributes: data.ecoAttributes,
+      })
+      .eq("id", data.productId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
 export const startSubscriptionCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ returnUrl: z.string().url() }).parse(input ?? {}))
