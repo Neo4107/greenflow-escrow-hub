@@ -96,6 +96,8 @@ function DashboardPage() {
     );
   }
 
+  const [editing, setEditing] = useState<Account["products"][number] | null>(null);
+
   const { store, products, payments, certificates, ledger } = data;
 
   return (
@@ -125,10 +127,21 @@ function DashboardPage() {
         showNinetyDayNotice={data.showNinetyDayNotice}
       />
 
-      <ProductsCard products={products} certificates={certificates} />
+      <ProductsCard
+        products={products}
+        certificates={certificates}
+        onEdit={(product) => setEditing(product)}
+      />
 
       {store.approval_status === "approved" ? (
-        <AddProductForm onSaved={() => queryClient.invalidateQueries({ queryKey: ["my-account"] })} />
+        <ProductForm
+          product={editing}
+          onSaved={() => {
+            setEditing(null);
+            queryClient.invalidateQueries({ queryKey: ["my-account"] });
+          }}
+          onCancelEdit={() => setEditing(null)}
+        />
       ) : (
         <div className="rounded-lg border border-border bg-muted p-6">
           <h2 className="font-serif text-xl font-semibold">
@@ -357,9 +370,11 @@ function FeeBalanceCard({
 function ProductsCard({
   products,
   certificates,
+  onEdit,
 }: {
   products: Account["products"];
   certificates: Account["certificates"];
+  onEdit: (product: Account["products"][number]) => void;
 }) {
   return (
     <section className="rounded-2xl border border-border bg-card p-6">
@@ -407,12 +422,22 @@ function ProductsCard({
                     </p>
                   )}
                 </div>
-                <span
-                  className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${style.className}`}
-                >
-                  <StatusIcon className="h-3.5 w-3.5" />
-                  {style.label}
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(product)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium hover:bg-accent"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    Edit
+                  </button>
+                  <span
+                    className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${style.className}`}
+                  >
+                    <StatusIcon className="h-3.5 w-3.5" />
+                    {style.label}
+                  </span>
+                </div>
               </li>
             );
           })}
