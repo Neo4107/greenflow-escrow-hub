@@ -651,7 +651,7 @@ function ProductForm({
   const mutation = useMutation({
     mutationFn: async () => {
       let certificateDocumentPath: string | undefined;
-      if (form.isBranded) {
+      if (!product && form.isBranded) {
         if (!certificateFile) {
           throw new Error(
             "Branded listings require a Certificate of Authorization / Letter of Authority.",
@@ -666,7 +666,7 @@ function ProductForm({
         certificateDocumentPath = path;
       }
 
-      const imagePaths: string[] = [];
+      const imagePaths: string[] = [...existingImages];
       if (photos.length > 0) {
         const { data: user } = await supabase.auth.getUser();
         for (const file of photos) {
@@ -678,6 +678,25 @@ function ProductForm({
           if (uploadError) throw new Error(`Photo upload failed: ${uploadError.message}`);
           imagePaths.push(path);
         }
+      }
+
+      if (product) {
+        return update({
+          data: {
+            productId: product.id,
+            title: form.title,
+            description: form.description || undefined,
+            category: form.category || undefined,
+            priceRands: Number(form.priceRands),
+            stock: Number(form.stock),
+            weightKg: Number(form.weightKg),
+            lengthCm: Number(form.lengthCm),
+            widthCm: Number(form.widthCm),
+            heightCm: Number(form.heightCm),
+            imagePaths,
+            ecoAttributes: attributes,
+          },
+        });
       }
 
       return save({
@@ -701,11 +720,11 @@ function ProductForm({
       });
     },
     onSuccess: (result) => {
-      setSuccess(
-        result.status === "approved"
-          ? "Listed and live on the marketplace."
-          : "Submitted for admin review — branded listings need certificate approval first.",
-      );
+      if ("status" in result && result.status !== "approved") {
+        setSuccess(
+          "Submitted for admin review — branded listings need certificate approval first.",
+        );
+      }
       setForm({
         title: "",
         description: "",
@@ -724,6 +743,8 @@ function ProductForm({
       setAttributes([]);
       setCertificateFile(null);
       setPhotos([]);
+      setExistingImages([]);
+      setExistingUrls([]);
       onSaved();
     },
     onError: (e) => setError(e instanceof Error ? e.message : "Could not save the product."),
