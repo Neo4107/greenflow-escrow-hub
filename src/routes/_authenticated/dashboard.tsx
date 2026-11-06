@@ -720,9 +720,11 @@ function ProductForm({
       });
     },
     onSuccess: (result) => {
-      if ("status" in result && result.status !== "approved") {
+      if ("status" in result) {
         setSuccess(
-          "Submitted for admin review — branded listings need certificate approval first.",
+          result.status === "approved"
+            ? "Listed and live on the marketplace."
+            : "Submitted for admin review — branded listings need certificate approval first.",
         );
       }
       setForm({
@@ -753,17 +755,22 @@ function ProductForm({
   return (
     <section className="rounded-2xl border border-border bg-card p-6">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="font-serif text-xl font-semibold">Add a product</h2>
+        <h2 className="font-serif text-xl font-semibold">
+          {product ? `Edit listing: ${product.title}` : "Add a product"}
+        </h2>
         <button
-          onClick={() => setOpen(!open)}
+          onClick={() => {
+            if (product) onCancelEdit();
+            else setOpen(!open);
+          }}
           className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-accent"
         >
           <Plus className="h-4 w-4" />
-          {open ? "Close" : "New listing"}
+          {product ? "Cancel" : open ? "Close" : "New listing"}
         </button>
       </div>
 
-      {open && (
+      {(open || Boolean(product)) && (
         <form
           className="mt-6 grid gap-4 sm:grid-cols-2"
           onSubmit={(e) => {
@@ -867,6 +874,37 @@ function ProductForm({
               Up to {MAX_PHOTOS} photos, 8 MB each. The first photo is the cover.
             </p>
             <div className="mt-2 grid grid-cols-3 gap-3 sm:grid-cols-6">
+              {existingImages.map((path, index) => {
+                const src = existingUrls[index];
+                if (!src) return null;
+                return (
+                  <div
+                    key={path}
+                    className="relative aspect-square overflow-hidden rounded-xl border border-border bg-muted"
+                  >
+                    <img
+                      src={src}
+                      alt={`Photo ${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                    {index === 0 ? (
+                      <span className="absolute left-1 top-1 rounded-full bg-primary px-2 py-0.5 text-[10px] text-primary-foreground">
+                        Cover
+                      </span>
+                    ) : null}
+                    <button
+                      type="button"
+                      aria-label={`Remove saved photo ${index + 1}`}
+                      onClick={() =>
+                        setExistingImages(existingImages.filter((p) => p !== path))
+                      }
+                      className="absolute right-1 top-1 rounded-full bg-background/90 p-1 hover:bg-background"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                );
+              })}
               {photos.map((file, index) => (
                 <div
                   key={`${file.name}-${index}`}
@@ -892,7 +930,7 @@ function ProductForm({
                   </button>
                 </div>
               ))}
-              {photos.length < MAX_PHOTOS ? (
+              {photos.length + existingImages.length < MAX_PHOTOS ? (
                 <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border text-xs text-muted-foreground hover:bg-accent">
                   <ImagePlus className="h-5 w-5" />
                   Add photo
@@ -905,7 +943,9 @@ function ProductForm({
                       const picked = Array.from(e.target.files ?? []).filter(
                         (f) => f.size <= 8 * 1024 * 1024,
                       );
-                      setPhotos([...photos, ...picked].slice(0, MAX_PHOTOS));
+                      setPhotos(
+                        [...photos, ...picked].slice(0, MAX_PHOTOS - existingImages.length),
+                      );
                       e.target.value = "";
                     }}
                   />
