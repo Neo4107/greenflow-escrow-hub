@@ -10,6 +10,7 @@ import {
   ExternalLink,
   ImagePlus,
   Loader2,
+  Pencil,
   X,
   Plus,
   Sparkles,
@@ -21,6 +22,7 @@ import {
   getMyAccount,
   createStore,
   saveProduct,
+  updateProduct,
   startSubscriptionCheckout,
   confirmSubscriptionPayment,
 } from "@/lib/seller.functions";
