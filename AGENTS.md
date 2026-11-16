@@ -10,3 +10,5 @@
 > the editor, so keep the branch in a working state.
 
 <!-- LOVABLE:END -->
+
+Courier quote requests and private seller pickup addresses stay in server-only modules, because delivery credentials and pickup details must never reach shoppers' browsers.

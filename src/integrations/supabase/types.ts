@@ -206,9 +206,15 @@ export type Database = {
           buyer_user_id: string | null
           commission_cents: number
           commission_rate: number
+          courier_quote_reference: string | null
           created_at: string
           currency: string
           delivery_cents: number
+          delivery_city: string | null
+          delivery_postal_code: string | null
+          delivery_province: string | null
+          delivery_street_address: string | null
+          delivery_suburb: string | null
           gateway: string
           gateway_reference: string
           id: string
@@ -223,9 +229,15 @@ export type Database = {
           buyer_user_id?: string | null
           commission_cents: number
           commission_rate?: number
+          courier_quote_reference?: string | null
           created_at?: string
           currency?: string
           delivery_cents?: number
+          delivery_city?: string | null
+          delivery_postal_code?: string | null
+          delivery_province?: string | null
+          delivery_street_address?: string | null
+          delivery_suburb?: string | null
           gateway?: string
           gateway_reference: string
           id?: string
@@ -240,9 +252,15 @@ export type Database = {
           buyer_user_id?: string | null
           commission_cents?: number
           commission_rate?: number
+          courier_quote_reference?: string | null
           created_at?: string
           currency?: string
           delivery_cents?: number
+          delivery_city?: string | null
+          delivery_postal_code?: string | null
+          delivery_province?: string | null
+          delivery_street_address?: string | null
+          delivery_suburb?: string | null
           gateway?: string
           gateway_reference?: string
           id?: string
@@ -633,6 +651,47 @@ export type Database = {
           },
         ]
       }
+      seller_pickup_addresses: {
+        Row: {
+          city: string
+          created_at: string
+          postal_code: string
+          province: string
+          seller_id: string
+          street_address: string
+          suburb: string
+          updated_at: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          postal_code: string
+          province: string
+          seller_id: string
+          street_address: string
+          suburb: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          postal_code?: string
+          province?: string
+          seller_id?: string
+          street_address?: string
+          suburb?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_pickup_addresses_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: true
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sellers: {
         Row: {
           approval_notes: string | null
@@ -651,6 +710,11 @@ export type Database = {
           next_billing_date: string | null
           outstanding_fee_cents: number
           paystack_subaccount_code: string | null
+          pickup_city: string | null
+          pickup_postal_code: string | null
+          pickup_province: string | null
+          pickup_street_address: string | null
+          pickup_suburb: string | null
           province: string | null
           slug: string
           store_name: string
@@ -677,6 +741,11 @@ export type Database = {
           next_billing_date?: string | null
           outstanding_fee_cents?: number
           paystack_subaccount_code?: string | null
+          pickup_city?: string | null
+          pickup_postal_code?: string | null
+          pickup_province?: string | null
+          pickup_street_address?: string | null
+          pickup_suburb?: string | null
           province?: string | null
           slug: string
           store_name: string
@@ -703,6 +772,11 @@ export type Database = {
           next_billing_date?: string | null
           outstanding_fee_cents?: number
           paystack_subaccount_code?: string | null
+          pickup_city?: string | null
+          pickup_postal_code?: string | null
+          pickup_province?: string | null
+          pickup_street_address?: string | null
+          pickup_suburb?: string | null
           province?: string | null
           slug?: string
           store_name?: string
